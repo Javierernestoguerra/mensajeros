@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="no-referrer">
+    <title>Rutas Ciego de Ávila</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.css" />
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; background: #eee; }
+        
+        /* Panel Superior Compacto */
+        .top-bar { background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; border-bottom: 1px solid #ddd; }
+        .input-box label { display: block; color: #666; font-weight: 600; margin-bottom: 2px; }
+        .input-box input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+
+        /* Mapa */
+        #map { flex-grow: 1; width: 100%; background: #ddd; z-index: 1; }
+
+        /* Panel de Resultados Flotante (Abajo) */
+        .results-card {
+            background: #222; color: #fff; padding: 15px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            text-align: center; font-size: 12px;
+            border-top: 4px solid #f1c40f;
+        }
+        .res-value { display: block; font-size: 16px; font-weight: bold; color: #f1c40f; margin-top: 4px; }
+        .res-label { opacity: 0.8; }
+
+        /* Botón Flotante Limpiar */
+        .btn-clear {
+            position: absolute; bottom: 90px; right: 15px;
+            background: #e74c3c; color: white; border: none;
+            padding: 12px 15px; border-radius: 50px;
+            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 999; cursor: pointer; outline: none;
+        }
+        .btn-clear:active { transform: scale(0.95); }
+
+        /* Ocultar panel de instrucciones del mapa */
+        .leaflet-routing-container { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="input-box"><label>Km/Litro</label><input type="number" id="consumo" value="40"></div>
+        <div class="input-box"><label>Multiplicador</label><input type="number" id="multiplicador" value="3"></div>
+        <div class="input-box"><label>Precio Gas (USD)</label><input type="number" id="gas" value="1.3"></div>
+        <div class="input-box"><label>Tasa (CUP)</label><input type="number" id="tasa" value="450"></div>
+    </div>
+
+    <div id="map"></div>
+    
+    <button class="btn-clear" onclick="resetMap()">❌ Borrar Ruta</button>
+
+    <div class="results-card">
+        <div><span class="res-label">Ida/Vuelta</span><span class="res-value" id="resKm">0 km</span></div>
+        <div><span class="res-label">Cobrar USD</span><span class="res-value" id="resUsd">$0.00</span></div>
+        <div><span class="res-label">Cobrar CUP</span><span class="res-value" id="resCup">$0</span></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+
+    <script>
+        // --- CONFIGURACIÓN CIEGO DE ÁVILA ---
+        const CIEGO_CENTER = [21.933, -78.650];
+        const BOUNDS = L.latLngBounds([20.5, -79.5], [22.8, -78.0]);
+
+        var map, control;
+        var kmRoute = 0;
+        var inputs = document.querySelectorAll('input');
+
+        // Corrección de Iconos
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        });
+
+        window.onload = () => {
+            initApp();
+            inputs.forEach(i => i.addEventListener('input', calculate));
+        };
+
+        function initApp() {
+            map = L.map('map', {
+                center: CIEGO_CENTER,
+                zoom: 9,
+                minZoom: 8,
+                maxBounds: BOUNDS,
+                maxBoundsViscosity: 1.0
+            });
+
+            // Mapa Ligero (CartoDB Voyager)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            setTimeout(() => map.invalidateSize(), 300);
+
+            map.on('click', (e) => {
+                addPoint(e.latlng);
+            });
+        }
+
+        var points = [];
+
+        function addPoint(latlng) {
+            if (points.length >= 2) {
+                resetMap();
+                points.push(latlng);
+                L.marker(latlng).addTo(map);
+            } else {
+                points.push(latlng);
+                L.marker(latlng).addTo(map);
+
+                if (points.length === 2) {
+                    calcRoute();
+                }
+            }
+        }
+
+        function calcRoute() {
+            if (control) map.removeControl(control);
+
+            control = L.Routing.control({
+                waypoints: points,
+                routeWhileDragging: false,
+                show: false,
+                createMarker: function() { return null; },
+                lineOptions: { styles: [{color: '#2980b9', opacity: 0.8, weight: 6}] },
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                })
+            }).addTo(map);
+
+            control.on('routesfound', function(e) {
+                var routes = e.routes;
+                kmRoute = routes[0].summary.totalDistance / 1000;
+                calculate();
+            });
+
+            control.on('routingerror', function() {
+                alert("Error calculando ruta. Revisa tu conexión a internet.");
+            });
+        }
+
+        function calculate() {
+            if (kmRoute <= 0) return;
+
+            let consumo = parseFloat(document.getElementById('consumo').value) || 40;
+            let multiplicador = parseFloat(document.getElementById('multiplicador').value) || 1;
+            let precioGas = parseFloat(document.getElementById('gas').value) || 1;
+            let tasa = parseFloat(document.getElementById('tasa').value) || 1;
+
+            let totalKm = kmRoute * 2;
+            let litros = totalKm / consumo;
+            let costoUsd = litros * precioGas;
+            let finalUsd = costoUsd * multiplicador;
+            let finalCup = finalUsd * tasa;
+
+            document.getElementById('resKm').innerText = totalKm.toFixed(1) + " km";
+            document.getElementById('resUsd').innerText = "$" + finalUsd.toFixed(2);
+            document.getElementById('resCup').innerText = "$" + Math.ceil(finalCup);
+        }
+
+        function resetMap() {
+            points = [];
+            kmRoute = 0;
+            if (control) {
+                map.removeControl(control);
+                control = null;
+            }
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Marker) map.removeLayer(layer);
+            });
+            
+            document.getElementById('resKm').innerText = "0 km";
+            document.getElementById('resUsd').innerText = "$0.00";
+            document.getElementById('resCup').innerText = "$0";
+        }
+    </script>
+</body>
+</html>
