@@ -1,192 +1,787 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="referrer" content="no-referrer">
-    <title>Rutas Ciego de Ávila</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Tareas Local & Minijuego</title>
+  <style>
+    :root {
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text); padding: 12px; padding-bottom: 80px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 5px 0; }
+    h1 { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
+
+    /* Navegaci�n inferior / adaptada a celular */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 1000;
+      padding: 6px 0;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+      padding: 6px 0;
+    }
+
+    nav button .icon { font-size: 1.2rem; }
+    nav button.active { color: var(--primary); }
+
+    .section { display: none; background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .section.active { display: block; }
+
+    /* Frase Motivacional */
+    .quote-box {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+    .quote-box .quote-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85; margin-bottom: 4px; font-weight: 700; }
+    .quote-box .quote-text { font-size: 0.95rem; font-style: italic; font-weight: 500; line-height: 1.35; }
+
+    /* Progreso General Semanal */
+    .weekly-progress-card {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 15px;
+    }
+    .weekly-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .weekly-progress-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+    .weekly-progress-percent { font-size: 0.95rem; font-weight: 800; color: var(--primary); }
+    .weekly-progress-bar { background: #e5e7eb; height: 12px; border-radius: 6px; overflow: hidden; }
+    .weekly-progress-fill { background: linear-gradient(90deg, #10b981, #059669); height: 100%; width: 0%; transition: width 0.4s ease; }
+
+    /* Dashboard & Calendario */
+    .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
+    .calendar-day { border: 1px solid var(--border); padding: 10px; border-radius: 8px; text-align: center; background: #fafafa; }
+    .calendar-day header { font-weight: bold; font-size: 0.85rem; justify-content: center; color: var(--text); }
+    .progress-bar { background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* Tareas Diarias */
+    .days-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .day-card { border: 1px solid var(--border); padding: 12px; border-radius: 10px; cursor: pointer; background: #fafafa; transition: all 0.2s; text-align: center; }
+    .day-card:active { transform: scale(0.98); background: #e0e7ff; }
+    .day-card h3 { font-size: 1rem; color: var(--primary); }
+    .day-card .date-sub { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+    .day-card p { font-size: 0.85rem; font-weight: 600; }
+
+    .task-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff; }
+    .task-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .task-title { display: flex; align-items: center; gap: 8px; font-weight: 600; word-break: break-word; }
+    .subtasks-container { margin-left: 28px; margin-top: 8px; font-size: 0.88rem; color: #4b5563; display: flex; flex-direction: column; gap: 6px; }
+
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+    .badge-Rapida { background: #dbeafe; color: #1e40af; }
+    .badge-Media { background: #fef3c7; color: #92400e; }
+    .badge-Demorada { background: #fee2e2; color: #991b1b; }
+
+    /* Formulario */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+    .subtask-input-group { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.css" />
+    /* Botones */
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; width: 100%; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:active { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); color: white; width: auto; padding: 5px 8px; font-size: 0.8rem; border-radius: 6px; }
+    .btn-edit { background: #3b82f6; color: white; width: auto; padding: 5px 8px; font-size: 0.8rem; border-radius: 6px; }
+    .btn-secondary { background: #e5e7eb; color: var(--text); width: auto; font-size: 0.85rem; }
 
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; background: #eee; }
-        
-        /* Panel Superior Compacto */
-        .top-bar { background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; border-bottom: 1px solid #ddd; }
-        .input-box label { display: block; color: #666; font-weight: 600; margin-bottom: 2px; }
-        .input-box input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+    /* Minijuego */
+    .game-box { text-align: center; padding: 15px 5px; }
+    .game-mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+    .game-mode-btn { flex: 1; padding: 10px; border: 1px solid var(--border); background: #fafafa; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    .game-mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    .timer { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 15px 0; font-variant-numeric: tabular-nums; }
+    .records-list { margin-top: 15px; text-align: left; list-style: none; font-size: 0.85rem; }
+    .records-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }
 
-        /* Mapa */
-        #map { flex-grow: 1; width: 100%; background: #ddd; z-index: 1; }
+    /* Controles Backup */
+    .backup-controls { display: flex; gap: 10px; margin-top: 20px; }
+    .backup-controls button { flex: 1; font-size: 0.8rem; padding: 8px; }
 
-        /* Panel de Resultados Flotante (Abajo) */
-        .results-card {
-            background: #222; color: #fff; padding: 15px;
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            text-align: center; font-size: 12px;
-            border-top: 4px solid #f1c40f;
-        }
-        .res-value { display: block; font-size: 16px; font-weight: bold; color: #f1c40f; margin-top: 4px; }
-        .res-label { opacity: 0.8; }
+    /* Modal Editar */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 15px; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: #fff; border-radius: 12px; width: 100%; max-width: 500px; padding: 20px; max-height: 90vh; overflow-y: auto; }
 
-        /* Botón Flotante Limpiar */
-        .btn-clear {
-            position: absolute; bottom: 90px; right: 15px;
-            background: #e74c3c; color: white; border: none;
-            padding: 12px 15px; border-radius: 50px;
-            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 999; cursor: pointer; outline: none;
-        }
-        .btn-clear:active { transform: scale(0.95); }
-
-        /* Ocultar panel de instrucciones del mapa */
-        .leaflet-routing-container { display: none !important; }
-    </style>
+    @media (min-width: 640px) {
+      body { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: 90px; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div class="input-box"><label>Km/Litro</label><input type="number" id="consumo" value="40"></div>
-        <div class="input-box"><label>Multiplicador</label><input type="number" id="multiplicador" value="3"></div>
-        <div class="input-box"><label>Precio Gas (USD)</label><input type="number" id="gas" value="1.3"></div>
-        <div class="input-box"><label>Tasa (CUP)</label><input type="number" id="tasa" value="450"></div>
+  <header>
+    <h1> Mis Tareas Local</h1>
+  </header>
+
+  <!-- P�GINA PRINCIPAL / DASHBOARD -->
+  <section id="dashboard" class="section active">
+    <!-- Frase del D�a -->
+    <div class="quote-box">
+      <div class="quote-title"> Frase del D&iacute;a</div>
+      <div class="quote-text" id="dailyQuoteText">"Cargando frase motivacional..."</div>
     </div>
 
-    <div id="map"></div>
+    <!-- Progreso Semanal -->
+    <div class="weekly-progress-card">
+      <div class="weekly-progress-header">
+        <span class="weekly-progress-title">Progreso Semanal General</span>
+        <span class="weekly-progress-percent" id="weeklyPercentText">0%</span>
+      </div>
+      <div class="weekly-progress-bar">
+        <div class="weekly-progress-fill" id="weeklyProgressBar"></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:right;" id="weeklyCountText">0 de 0 tareas completadas</div>
+    </div>
+
+    <h2 style="font-size:1.1rem; margin-bottom:12px;">Resumen Visual</h2>
+    <div class="dashboard-grid">
+      <div>
+        <h3 style="font-size:0.95rem; color:var(--text-muted);">Estado Semanal por D&iacute;as</h3>
+        <div class="calendar-grid" id="dashboardCalendar"></div>
+      </div>
+      <div>
+        <h3 style="font-size:0.95rem; color:var(--text-muted); margin-top:10px;">R&eacute;cords Modo Sprint</h3>
+        <ul id="recordsList" class="records-list"></ul>
+      </div>
+    </div>
+    <div class="backup-controls">
+      <button class="btn btn-secondary" onclick="exportData()"> Exportar Datos</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()"> Importar Datos</button>
+      <input type="file" id="importFile" style="display:none" onchange="importData(event)" accept=".json">
+    </div>
+  </section>
+
+  <!-- TAREAS DIARIAS -->
+  <section id="daily" class="section">
+    <h2>Tareas Diarias</h2>
+    <div id="dailyView" style="margin-top:12px;">
+      <div class="days-list" id="daysContainer"></div>
+    </div>
+    <div id="dayDetailView" style="display:none; margin-top:10px;">
+      <button class="btn btn-secondary" onclick="showDaysList()" style="margin-bottom: 12px;"> Volver a D&iacute;as</button>
+      <h3 id="selectedDayTitle" style="font-size:1.1rem; color:var(--primary);"></h3>
+      <div style="margin: 12px 0;">
+        <label style="font-size:0.85rem; font-weight:600;">Filtrar Categor&iacute;a: </label>
+        <select id="categoryFilter" onchange="renderDayTasks()" style="padding:6px; border-radius:6px; border:1px solid var(--border);">
+          <option value="ALL">Todas</option>
+          <option value="R&aacute;pida">R&aacute;pida</option>
+          <option value="Media">Media</option>
+          <option value="Demorada">Demorada</option>
+        </select>
+      </div>
+      <div id="tasksListContainer"></div>
+    </div>
+  </section>
+
+  <!-- A�ADIR TAREAS -->
+  <section id="add" class="section">
+    <h2 style="font-size:1.1rem; margin-bottom:12px;">A&ntilde;adir Nueva Tarea</h2>
+    <form id="taskForm" onsubmit="saveTask(event)">
+      <div class="form-group">
+        <label>Nombre de la Tarea:</label>
+        <input type="text" id="taskName" required placeholder="Ej. Estudiar HTML">
+      </div>
+      <div class="form-group">
+        <label>Sub-tareas (Opcional):</label>
+        <div id="subtasksWrapper">
+          <div class="subtask-input-group">
+            <input type="text" class="subtask-input" placeholder="Ej. Leer cap&iacute;tulo 1">
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addSubtaskField('subtasksWrapper')" style="margin-top:8px;">+ A&ntilde;adir sub-tarea</button>
+      </div>
+      <div class="form-group">
+        <label>D&iacute;a asignado:</label>
+        <select id="taskDay" required>
+          <option value="Lunes">Lunes</option>
+          <option value="Martes">Martes</option>
+          <option value="Mi&eacute;rcoles">Mi&eacute;rcoles</option>
+          <option value="Jueves">Jueves</option>
+          <option value="Viernes">Viernes</option>
+          <option value="S&aacute;bado">S&aacute;bado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Categor&iacute;a:</label>
+        <select id="taskCategory" required>
+          <option value="R&aacute;pida">Tarea R&aacute;pida</option>
+          <option value="Media">Tarea Media</option>
+          <option value="Demorada">Tarea Demorada</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Guardar Tarea</button>
+    </form>
+  </section>
+
+  <!-- MINIJUEGO TAREAS R�PIDAS -->
+  <section id="game" class="section">
+    <div class="game-box">
+      <h2>Modo: Tareas R&aacute;pidas</h2>
+      
+      <div class="game-mode-selector" style="margin-top:15px;">
+        <button class="game-mode-btn active" id="btnModeToday" onclick="selectGameMode('today')"> Tareas de Hoy</button>
+        <button class="game-mode-btn" id="btnModeSprint" onclick="selectGameMode('sprint')"> Modo Sprint (Semanal)</button>
+      </div>
+
+      <div id="gameContent">
+        <p id="gameModeDesc" style="margin-top:10px; color:var(--text-muted); font-size:0.9rem;">Resuelve las tareas r&aacute;pidas asignadas a la fecha de hoy.</p>
+        <button class="btn btn-primary" style="margin-top:20px;" onclick="startGame()"> Iniciar Minijuego</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL EDITAR TAREA -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+      <h3 style="font-size:1.1rem; margin-bottom:15px; color:var(--primary);"> Editar Tarea</h3>
+      <form id="editTaskForm" onsubmit="saveEditedTask(event)">
+        <input type="hidden" id="editTaskId">
+        <div class="form-group">
+          <label>Nombre de la Tarea:</label>
+          <input type="text" id="editTaskName" required>
+        </div>
+        <div class="form-group">
+          <label>Sub-tareas:</label>
+          <div id="editSubtasksWrapper"></div>
+          <button type="button" class="btn btn-secondary" onclick="addSubtaskField('editSubtasksWrapper')" style="margin-top:8px;">+ A&ntilde;adir sub-tarea</button>
+        </div>
+        <div class="form-group">
+          <label>D&iacute;a asignado:</label>
+          <select id="editTaskDay" required>
+            <option value="Lunes">Lunes</option>
+            <option value="Martes">Martes</option>
+            <option value="Mi&eacute;rcoles">Mi&eacute;rcoles</option>
+            <option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option>
+            <option value="S&aacute;bado">S&aacute;bado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categor&iacute;a:</label>
+          <select id="editTaskCategory" required>
+            <option value="R&aacute;pida">Tarea R&aacute;pida</option>
+            <option value="Media">Tarea Media</option>
+            <option value="Demorada">Tarea Demorada</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+          <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeEditModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NAVEGACI�N INFERIOR (Estilo App M�vil) -->
+  <nav>
+    <button onclick="switchTab('dashboard', this)" class="active">
+      <span class="icon"></span>
+      <span>Inicio</span>
+    </button>
+    <button onclick="switchTab('daily', this)">
+      <span class="icon"></span>
+      <span>Diarias</span>
+    </button>
+    <button onclick="switchTab('add', this)">
+      <span class="icon"></span>
+      <span>A&ntilde;adir</span>
+    </button>
+    <button onclick="switchTab('game', this)">
+      <span class="icon"></span>
+      <span>R&aacute;pidas</span>
+    </button>
+  </nav>
+
+  <script>
+    const DAYS = ['Lunes', 'Martes', 'Mi&eacute;rcoles', 'Jueves', 'Viernes', 'S&aacute;bado', 'Domingo'];
+    const DAYS_RAW = ['Lunes', 'Martes', 'Mi�rcoles', 'Jueves', 'Viernes', 'S�bado', 'Domingo'];
+
+    // 20 Frases Motivacionales para rotar diariamente
+    const MOTIVATIONAL_QUOTES = [
+      "No cuentes los d&iacute;as, haz que los d&iacute;as cuenten.",
+      "El secreto para salir adelante es empezar.",
+      "La procrastinaci&oacute;n hace que las cosas f&aacute;ciles sean dif&iacute;ciles y las dif&iacute;ciles m&aacute;s dif&iacute;ciles.",
+      "Haz hoy lo que otros no har&aacute;n para tener ma&ntilde;ana lo que otros no tendr&aacute;n.",
+      "No tienes que ser grande para empezar, pero tienes que empezar para ser grande.",
+      "Un a&ntilde;o a partir de ahora desear&aacute;s haber empezado hoy.",
+      "El trabajo duro vence al talento cuando el talento no trabaja duro.",
+      "Peque&ntilde;os avances diarios suman grandes resultados.",
+      "La disciplina es hacer lo que debes hacer incluso cuando no tienes ganas.",
+      "El momento de empezar es AHORA.",
+      "Tu futuro se crea por lo que haces hoy, no ma&ntilde;ana.",
+      "No pares cuando est&eacute;s cansado, para cuando hayas terminado.",
+      "La mejor forma de predecir el futuro es cre&aacute;ndolo.",
+      "La constancia es la clave del &eacute;xito.",
+      "Lo &uacute;nico imposible es aquello que no intentas.",
+      "No dejes para ma&ntilde;ana lo que puedes hacer hoy.",
+      "El &eacute;xito es la suma de peque&ntilde;os esfuerzos repetidos d&iacute;a tras d&iacute;a.",
+      "Focus: enf&oacute;cate en tu meta y no te distraigas.",
+      "Cada tarea completada te acerca un paso m&aacute;s a tu meta.",
+      "Hazlo con pasi&oacute;n o no lo hagas."
+    ];
     
-    <button class="btn-clear" onclick="resetMap()">❌ Borrar Ruta</button>
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let records = JSON.parse(localStorage.getItem('records')) || [];
+    let selectedDay = null;
 
-    <div class="results-card">
-        <div><span class="res-label">Ida/Vuelta</span><span class="res-value" id="resKm">0 km</span></div>
-        <div><span class="res-label">Cobrar USD</span><span class="res-value" id="resUsd">$0.00</span></div>
-        <div><span class="res-label">Cobrar CUP</span><span class="res-value" id="resCup">$0</span></div>
-    </div>
+    // Minijuego Config
+    let selectedGameMode = 'today'; // 'today' o 'sprint'
+    let gameTasks = [];
+    let currentGameIndex = 0;
+    let timerInterval = null;
+    let secondsElapsed = 0;
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+    function saveToStorage() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      localStorage.setItem('records', JSON.stringify(records));
+    }
 
-    <script>
-        // --- CONFIGURACIÓN CIEGO DE ÁVILA ---
-        const CIEGO_CENTER = [21.933, -78.650];
-        const BOUNDS = L.latLngBounds([20.5, -79.5], [22.8, -78.0]);
+    function loadDailyQuote() {
+      const today = new Date();
+      const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+      const quoteIndex = dayOfYear % MOTIVATIONAL_QUOTES.length;
+      document.getElementById('dailyQuoteText').innerHTML = `"${MOTIVATIONAL_QUOTES[quoteIndex]}"`;
+    }
 
-        var map, control;
-        var kmRoute = 0;
-        var inputs = document.querySelectorAll('input');
+    function getCurrentDayRawName() {
+      const now = new Date();
+      const currentDayIdx = (now.getDay() + 6) % 7; // Lunes = 0
+      return DAYS_RAW[currentDayIdx];
+    }
 
-        // Corrección de Iconos
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    function switchTab(tabId, btnEl) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (btnEl) btnEl.classList.add('active');
+
+      if(tabId === 'dashboard') renderDashboard();
+      if(tabId === 'daily') showDaysList();
+    }
+
+    function getFormattedDateForDay(dayIndex) {
+      const now = new Date();
+      const currentDayIdx = (now.getDay() + 6) % 7; 
+      const diff = dayIndex - currentDayIdx;
+      const targetDate = new Date(now);
+      targetDate.setDate(now.getDate() + diff);
+      return targetDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+    }
+
+    // DASHBOARD & PROGRESO SEMANAL
+    function renderDashboard() {
+      loadDailyQuote();
+
+      // Progreso General Semanal
+      const totalTasksCount = tasks.length;
+      const completedTasksCount = tasks.filter(t => t.completed).length;
+      const weeklyPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
+      document.getElementById('weeklyPercentText').innerText = `${weeklyPercent}%`;
+      document.getElementById('weeklyProgressBar').style.width = `${weeklyPercent}%`;
+      document.getElementById('weeklyCountText').innerText = `${completedTasksCount} de ${totalTasksCount} tareas completadas`;
+
+      // Calendario por D�as
+      const cal = document.getElementById('dashboardCalendar');
+      cal.innerHTML = '';
+      DAYS_RAW.forEach((day, index) => {
+        const dayTasks = tasks.filter(t => t.day === day);
+        const completed = dayTasks.filter(t => t.completed).length;
+        const total = dayTasks.length;
+        const percent = total > 0 ? (completed / total) * 100 : 0;
+
+        cal.innerHTML += `
+          <div class="calendar-day">
+            <header>${DAYS[index]}</header>
+            <small style="color:var(--text-muted);">${completed}/${total}</small>
+            <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
+          </div>
+        `;
+      });
+
+      // R�cords Sprint
+      const recList = document.getElementById('recordsList');
+      recList.innerHTML = records.length === 0 ? '<li style="color:var(--text-muted);">Sin r&eacute;cords de Modo Sprint a&uacute;n</li>' : 
+        records.slice(-5).reverse().map(r => `<li><b>${r.date}:</b> ${r.time}s (${r.count} tareas)</li>`).join('');
+    }
+
+    // TAREAS DIARIAS
+    function showDaysList() {
+      document.getElementById('dailyView').style.display = 'block';
+      document.getElementById('dayDetailView').style.display = 'none';
+      const container = document.getElementById('daysContainer');
+      container.innerHTML = '';
+
+      DAYS_RAW.forEach((day, index) => {
+        const dayTasks = tasks.filter(t => t.day === day);
+        const completed = dayTasks.filter(t => t.completed).length;
+        const total = dayTasks.length;
+
+        container.innerHTML += `
+          <div class="day-card" onclick="openDay('${day}', '${DAYS[index]}', ${index})">
+            <h3>${DAYS[index]}</h3>
+            <div class="date-sub">${getFormattedDateForDay(index)}</div>
+            <p style="color:${completed === total && total > 0 ? 'var(--success)' : 'var(--text)'};">
+              ${completed} de ${total}
+            </p>
+          </div>
+        `;
+      });
+    }
+
+    function openDay(rawDay, formattedDay, index) {
+      selectedDay = rawDay;
+      document.getElementById('dailyView').style.display = 'none';
+      document.getElementById('dayDetailView').style.display = 'block';
+      document.getElementById('selectedDayTitle').innerHTML = `${formattedDay} (${getFormattedDateForDay(index)})`;
+      renderDayTasks();
+    }
+
+    function renderDayTasks() {
+      const catFilter = document.getElementById('categoryFilter').value;
+      const container = document.getElementById('tasksListContainer');
+      container.innerHTML = '';
+
+      let filtered = tasks.filter(t => t.day === selectedDay);
+      if(catFilter !== 'ALL') {
+        filtered = filtered.filter(t => t.category.includes(catFilter.replace('&bsp;', '').replace('&aacute;', '�')));
+      }
+
+      if(filtered.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No hay tareas en esta lista.</p>';
+        return;
+      }
+
+      filtered.forEach(task => {
+        const subtasksHtml = task.subtasks.map((st, i) => `
+          <div>
+            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', ${i})"> 
+            <span style="${st.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${st.name}</span>
+          </div>
+        `).join('');
+
+        const catClass = task.category.normalize("NFD").replace(/[-]/g, "");
+
+        container.innerHTML += `
+          <div class="task-card">
+            <div class="task-header">
+              <div class="task-title">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
+                <span style="${task.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${task.name}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="badge badge-${catClass}">${task.category}</span>
+                <button class="btn btn-edit" onclick="openEditModal('${task.id}')"></button>
+                <button class="btn btn-danger" onclick="deleteTask('${task.id}')"></button>
+              </div>
+            </div>
+            ${subtasksHtml ? `<div class="subtasks-container">${subtasksHtml}</div>` : ''}
+          </div>
+        `;
+      });
+    }
+
+    function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if(task) {
+        task.completed = !task.completed;
+        task.subtasks.forEach(s => s.completed = task.completed);
+        saveToStorage();
+        renderDayTasks();
+      }
+    }
+
+    function toggleSubtask(taskId, subIdx) {
+      const task = tasks.find(t => t.id === taskId);
+      if(task) {
+        task.subtasks[subIdx].completed = !task.subtasks[subIdx].completed;
+        task.completed = task.subtasks.every(s => s.completed);
+        saveToStorage();
+        renderDayTasks();
+      }
+    }
+
+    function deleteTask(id) {
+      if(confirm('�Seguro que deseas eliminar esta tarea?')) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveToStorage();
+        renderDayTasks();
+      }
+    }
+
+    // EDITAR TAREA (MODAL)
+    function openEditModal(id) {
+      const task = tasks.find(t => t.id === id);
+      if(!task) return;
+
+      document.getElementById('editTaskId').value = task.id;
+      document.getElementById('editTaskName').value = task.name;
+      document.getElementById('editTaskDay').value = task.day;
+      document.getElementById('editTaskCategory').value = task.category;
+
+      const editWrapper = document.getElementById('editSubtasksWrapper');
+      editWrapper.innerHTML = '';
+      if(task.subtasks && task.subtasks.length > 0) {
+        task.subtasks.forEach(st => {
+          editWrapper.innerHTML += `
+            <div class="subtask-input-group">
+              <input type="text" class="subtask-input" value="${st.name}" placeholder="Nombre sub-tarea">
+              <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>
+            </div>
+          `;
         });
+      } else {
+        editWrapper.innerHTML = `
+          <div class="subtask-input-group">
+            <input type="text" class="subtask-input" placeholder="Nombre sub-tarea">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>
+          </div>
+        `;
+      }
 
-        window.onload = () => {
-            initApp();
-            inputs.forEach(i => i.addEventListener('input', calculate));
-        };
+      document.getElementById('editModal').classList.add('active');
+    }
 
-        function initApp() {
-            map = L.map('map', {
-                center: CIEGO_CENTER,
-                zoom: 9,
-                minZoom: 8,
-                maxBounds: BOUNDS,
-                maxBoundsViscosity: 1.0
-            });
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
 
-            // Mapa Ligero (CartoDB Voyager)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CartoDB',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(map);
+    function saveEditedTask(e) {
+      e.preventDefault();
+      const id = document.getElementById('editTaskId').value;
+      const task = tasks.find(t => t.id === id);
+      if(!task) return;
 
-            setTimeout(() => map.invalidateSize(), 300);
+      task.name = document.getElementById('editTaskName').value;
+      task.day = document.getElementById('editTaskDay').value;
+      task.category = document.getElementById('editTaskCategory').value;
 
-            map.on('click', (e) => {
-                addPoint(e.latlng);
-            });
+      const subInputs = document.querySelectorAll('#editSubtasksWrapper .subtask-input');
+      const updatedSubtasks = [];
+      subInputs.forEach(input => {
+        if(input.value.trim() !== '') {
+          // Mantener estado si ya exist�a
+          const existing = task.subtasks.find(s => s.name === input.value.trim());
+          updatedSubtasks.push({
+            name: input.value.trim(),
+            completed: existing ? existing.completed : false
+          });
+        }
+      });
+      task.subtasks = updatedSubtasks;
+
+      saveToStorage();
+      closeEditModal();
+      renderDayTasks();
+    }
+
+    // FORMULARIO A�ADIR
+    function addSubtaskField(containerId) {
+      const wrapper = document.getElementById(containerId);
+      const div = document.createElement('div');
+      div.className = 'subtask-input-group';
+      div.innerHTML = `
+        <input type="text" class="subtask-input" placeholder="Nombre sub-tarea">
+        ${containerId === 'editSubtasksWrapper' ? '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>' : ''}
+      `;
+      wrapper.appendChild(div);
+    }
+
+    function saveTask(e) {
+      e.preventDefault();
+      const name = document.getElementById('taskName').value;
+      const day = document.getElementById('taskDay').value;
+      const category = document.getElementById('taskCategory').value;
+      const subInputs = document.querySelectorAll('#subtasksWrapper .subtask-input');
+      
+      const subtasks = [];
+      subInputs.forEach(input => {
+        if(input.value.trim() !== '') {
+          subtasks.push({ name: input.value.trim(), completed: false });
+        }
+      });
+
+      const newTask = {
+        id: Date.now().toString(),
+        name,
+        day,
+        category,
+        subtasks,
+        completed: false
+      };
+
+      tasks.push(newTask);
+      saveToStorage();
+
+      document.getElementById('taskForm').reset();
+      document.getElementById('subtasksWrapper').innerHTML = `<div class="subtask-input-group"><input type="text" class="subtask-input" placeholder="Ej. Leer cap�tulo 1"></div>`;
+      alert('�Tarea agregada exitosamente!');
+    }
+
+    // MINIJUEGO TAREAS R�PIDAS (MODO HOY VS MODO SPRINT)
+    function selectGameMode(mode) {
+      selectedGameMode = mode;
+      document.getElementById('btnModeToday').classList.toggle('active', mode === 'today');
+      document.getElementById('btnModeSprint').classList.toggle('active', mode === 'sprint');
+      
+      const desc = document.getElementById('gameModeDesc');
+      if(mode === 'today') {
+        desc.innerText = 'Resuelve las tareas r�pidas asignadas a la fecha de hoy.';
+      } else {
+        desc.innerText = 'Modo Sprint: Resuelve TODAS las tareas r�pidas de toda la semana de corrido (Tributa a los R�cords).';
+      }
+    }
+
+    function startGame() {
+      if(selectedGameMode === 'today') {
+        const todayRaw = getCurrentDayRawName();
+        gameTasks = tasks.filter(t => t.category.includes('R�pida') && t.day === todayRaw && !t.completed);
+      } else { // sprint mode (todas las r�pidas de la semana)
+        gameTasks = tasks.filter(t => t.category.includes('R�pida') && !t.completed);
+      }
+
+      if(gameTasks.length === 0) {
+        alert(selectedGameMode === 'today' ? 'No hay tareas r�pidas pendientes para el d�a de hoy.' : 'No hay tareas r�pidas pendientes en toda la semana.');
+        return;
+      }
+
+      currentGameIndex = 0;
+      secondsElapsed = 0;
+      clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+        const timerEl = document.getElementById('timerDisplay');
+        if (timerEl) timerEl.innerText = secondsElapsed + 's';
+      }, 1000);
+
+      renderGameTask();
+    }
+
+    function renderGameTask() {
+      const current = gameTasks[currentGameIndex];
+      const gameContent = document.getElementById('gameContent');
+
+      if(!current) {
+        clearInterval(timerInterval);
+        
+        // Solo guardamos en r�cord si es en MODO SPRINT (todas las r�pidas)
+        if(selectedGameMode === 'sprint') {
+          records.push({
+            date: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}),
+            time: secondsElapsed,
+            count: gameTasks.length
+          });
+          saveToStorage();
         }
 
-        var points = [];
+        gameContent.innerHTML = `
+          <h3 style="color:var(--success);"> �Felicidades! Completaste el bloque de tareas r&aacute;pidas.</h3>
+          <p style="margin:10px 0;">Tiempo total: <b>${secondsElapsed} segundos</b></p>
+          ${selectedGameMode === 'sprint' ? '<p style="font-size:0.8rem; color:var(--primary); font-weight:bold;"> �Nuevo R&eacute;cord Registrado!</p>' : ''}
+          <button class="btn btn-primary" style="margin-top:15px;" onclick="startGame()">Volver a Jugar</button>
+        `;
+        return;
+      }
 
-        function addPoint(latlng) {
-            if (points.length >= 2) {
-                resetMap();
-                points.push(latlng);
-                L.marker(latlng).addTo(map);
-            } else {
-                points.push(latlng);
-                L.marker(latlng).addTo(map);
+      gameContent.innerHTML = `
+        <div class="timer" id="timerDisplay">${secondsElapsed}s</div>
+        <p style="color:var(--text-muted);">Tarea ${currentGameIndex + 1} de ${gameTasks.length} (${selectedGameMode === 'today' ? 'Hoy' : 'Sprint Semanal'})</p>
+        <h2 style="margin: 12px 0; color: var(--primary); font-size:1.4rem;">${current.name}</h2>
+        <p style="font-size:0.85rem; margin-bottom:15px;">D&iacute;a asignado: ${current.day}</p>
+        <button class="btn btn-primary" onclick="completeGameTask()"> Completar y Siguiente</button>
+      `;
+    }
 
-                if (points.length === 2) {
-                    calcRoute();
-                }
-            }
+    function completeGameTask() {
+      const current = gameTasks[currentGameIndex];
+      const mainTask = tasks.find(t => t.id === current.id);
+      if(mainTask) {
+        mainTask.completed = true;
+        mainTask.subtasks.forEach(s => s.completed = true);
+        saveToStorage();
+      }
+
+      currentGameIndex++;
+      renderGameTask();
+    }
+
+    // EXPORTAR / IMPORTAR
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, records }));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "backup_tareas.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData(event) {
+      const fileReader = new FileReader();
+      fileReader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.tasks) tasks = imported.tasks;
+          if (imported.records) records = imported.records;
+          saveToStorage();
+          renderDashboard();
+          alert('�Datos importados correctamente!');
+        } catch(err) {
+          alert('Error al leer el archivo JSON.');
         }
+      };
+      fileReader.readAsText(event.target.files[0]);
+    }
 
-        function calcRoute() {
-            if (control) map.removeControl(control);
-
-            control = L.Routing.control({
-                waypoints: points,
-                routeWhileDragging: false,
-                show: false,
-                createMarker: function() { return null; },
-                lineOptions: { styles: [{color: '#2980b9', opacity: 0.8, weight: 6}] },
-                router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
-                })
-            }).addTo(map);
-
-            control.on('routesfound', function(e) {
-                var routes = e.routes;
-                kmRoute = routes[0].summary.totalDistance / 1000;
-                calculate();
-            });
-
-            control.on('routingerror', function() {
-                alert("Error calculando ruta. Revisa tu conexión a internet.");
-            });
-        }
-
-        function calculate() {
-            if (kmRoute <= 0) return;
-
-            let consumo = parseFloat(document.getElementById('consumo').value) || 40;
-            let multiplicador = parseFloat(document.getElementById('multiplicador').value) || 1;
-            let precioGas = parseFloat(document.getElementById('gas').value) || 1;
-            let tasa = parseFloat(document.getElementById('tasa').value) || 1;
-
-            let totalKm = kmRoute * 2;
-            let litros = totalKm / consumo;
-            let costoUsd = litros * precioGas;
-            let finalUsd = costoUsd * multiplicador;
-            let finalCup = finalUsd * tasa;
-
-            document.getElementById('resKm').innerText = totalKm.toFixed(1) + " km";
-            document.getElementById('resUsd').innerText = "$" + finalUsd.toFixed(2);
-            document.getElementById('resCup').innerText = "$" + Math.ceil(finalCup);
-        }
-
-        function resetMap() {
-            points = [];
-            kmRoute = 0;
-            if (control) {
-                map.removeControl(control);
-                control = null;
-            }
-            map.eachLayer((layer) => {
-                if (layer instanceof L.Marker) map.removeLayer(layer);
-            });
-            
-            document.getElementById('resKm').innerText = "0 km";
-            document.getElementById('resUsd').innerText = "$0.00";
-            document.getElementById('resCup').innerText = "$0";
-        }
-    </script>
+    // Carga Inicial
+    renderDashboard();
+  </script>
 </body>
 </html>
+
