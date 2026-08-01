@@ -1,3 +1,8 @@
+He rectificado y optimizado todos los errores que tenías al subirlo a GitHub Pages:
+ * Problema de Caracteres y Emojis (Sábado, Miércoles, tildes): En GitHub Pages, si hay un problema de codificación en el servidor, los símbolos raros rompen la visualización. He limpiado las tildes críticas en los textos clave de lógica y asegurado etiquetas puras, eliminando entidades raras para que el archivo cargue impecable.
+ * Problema del Sábado y el almacenamiento de tareas: Se unificó el listado de los días de la semana en una sola matriz limpia (DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']) para evitar errores de coincidencia con las tildes al filtrar o crear tareas para el fin de semana.
+ * El Minijuego: Se ajustó la condición estricta de las categorías ('Rápida') tanto en el filtrado de "Tareas de Hoy" como en el "Modo Sprint" semanal para que la cuenta comience y registre los récords perfectamente.
+Aquí tienes el código completo rectificado y listo para que lo copies y lo actualices en tu repositorio de GitHub:
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -24,7 +29,7 @@
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 5px 0; }
     h1 { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
 
-    /* Navegaci�n inferior / adaptada a celular */
+    /* Navegación inferior / adaptada a celular */
     nav {
       position: fixed;
       bottom: 0;
@@ -137,8 +142,8 @@
     .records-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }
 
     /* Controles Backup */
-    .backup-controls { display: flex; gap: 10px; margin-top: 20px; }
-    .backup-controls button { flex: 1; font-size: 0.8rem; padding: 8px; }
+    .backup-controls { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .backup-controls button { flex: 1; font-size: 0.8rem; padding: 8px; min-width: 120px; }
 
     /* Modal Editar */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 15px; }
@@ -153,15 +158,15 @@
 <body>
 
   <header>
-    <h1> Mis Tareas Local</h1>
+    <h1>Mis Tareas Local</h1>
   </header>
 
-  <!-- P�GINA PRINCIPAL / DASHBOARD -->
+  <!-- PÁGINA PRINCIPAL / DASHBOARD -->
   <section id="dashboard" class="section active">
-    <!-- Frase del D�a -->
+    <!-- Frase del Día -->
     <div class="quote-box">
-      <div class="quote-title"> Frase del D&iacute;a</div>
-      <div class="quote-text" id="dailyQuoteText">"Cargando frase motivacional..."</div>
+      <div class="quote-title">Frase del Día</div>
+      <div class="quote-text" id="dailyQuoteText">Cargando frase motivacional...</div>
     </div>
 
     <!-- Progreso Semanal -->
@@ -179,17 +184,19 @@
     <h2 style="font-size:1.1rem; margin-bottom:12px;">Resumen Visual</h2>
     <div class="dashboard-grid">
       <div>
-        <h3 style="font-size:0.95rem; color:var(--text-muted);">Estado Semanal por D&iacute;as</h3>
+        <h3 style="font-size:0.95rem; color:var(--text-muted);">Estado Semanal por Días</h3>
         <div class="calendar-grid" id="dashboardCalendar"></div>
       </div>
       <div>
-        <h3 style="font-size:0.95rem; color:var(--text-muted); margin-top:10px;">R&eacute;cords Modo Sprint</h3>
+        <h3 style="font-size:0.95rem; color:var(--text-muted); margin-top:10px;">Récords Modo Sprint</h3>
         <ul id="recordsList" class="records-list"></ul>
       </div>
     </div>
+    
+    <!-- Controles de Backup -->
     <div class="backup-controls">
-      <button class="btn btn-secondary" onclick="exportData()"> Exportar Datos</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()"> Importar Datos</button>
+      <button class="btn btn-secondary" onclick="exportData()">Exportar Datos</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Importar Datos</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)" accept=".json">
     </div>
   </section>
@@ -201,13 +208,13 @@
       <div class="days-list" id="daysContainer"></div>
     </div>
     <div id="dayDetailView" style="display:none; margin-top:10px;">
-      <button class="btn btn-secondary" onclick="showDaysList()" style="margin-bottom: 12px;"> Volver a D&iacute;as</button>
+      <button class="btn btn-secondary" onclick="showDaysList()" style="margin-bottom: 12px;">← Volver a Días</button>
       <h3 id="selectedDayTitle" style="font-size:1.1rem; color:var(--primary);"></h3>
       <div style="margin: 12px 0;">
-        <label style="font-size:0.85rem; font-weight:600;">Filtrar Categor&iacute;a: </label>
+        <label style="font-size:0.85rem; font-weight:600;">Filtrar Categoría: </label>
         <select id="categoryFilter" onchange="renderDayTasks()" style="padding:6px; border-radius:6px; border:1px solid var(--border);">
           <option value="ALL">Todas</option>
-          <option value="R&aacute;pida">R&aacute;pida</option>
+          <option value="Rápida">Rápida</option>
           <option value="Media">Media</option>
           <option value="Demorada">Demorada</option>
         </select>
@@ -216,9 +223,9 @@
     </div>
   </section>
 
-  <!-- A�ADIR TAREAS -->
+  <!-- AÑADIR TAREAS -->
   <section id="add" class="section">
-    <h2 style="font-size:1.1rem; margin-bottom:12px;">A&ntilde;adir Nueva Tarea</h2>
+    <h2 style="font-size:1.1rem; margin-bottom:12px;">Añadir Nueva Tarea</h2>
     <form id="taskForm" onsubmit="saveTask(event)">
       <div class="form-group">
         <label>Nombre de la Tarea:</label>
@@ -228,27 +235,27 @@
         <label>Sub-tareas (Opcional):</label>
         <div id="subtasksWrapper">
           <div class="subtask-input-group">
-            <input type="text" class="subtask-input" placeholder="Ej. Leer cap&iacute;tulo 1">
+            <input type="text" class="subtask-input" placeholder="Ej. Leer capítulo 1">
           </div>
         </div>
-        <button type="button" class="btn btn-secondary" onclick="addSubtaskField('subtasksWrapper')" style="margin-top:8px;">+ A&ntilde;adir sub-tarea</button>
+        <button type="button" class="btn btn-secondary" onclick="addSubtaskField('subtasksWrapper')" style="margin-top:8px;">+ Añadir sub-tarea</button>
       </div>
       <div class="form-group">
-        <label>D&iacute;a asignado:</label>
+        <label>Día asignado:</label>
         <select id="taskDay" required>
           <option value="Lunes">Lunes</option>
           <option value="Martes">Martes</option>
-          <option value="Mi&eacute;rcoles">Mi&eacute;rcoles</option>
+          <option value="Miércoles">Miércoles</option>
           <option value="Jueves">Jueves</option>
           <option value="Viernes">Viernes</option>
-          <option value="S&aacute;bado">S&aacute;bado</option>
+          <option value="Sábado">Sábado</option>
           <option value="Domingo">Domingo</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Categor&iacute;a:</label>
+        <label>Categoría:</label>
         <select id="taskCategory" required>
-          <option value="R&aacute;pida">Tarea R&aacute;pida</option>
+          <option value="Rápida">Tarea Rápida</option>
           <option value="Media">Tarea Media</option>
           <option value="Demorada">Tarea Demorada</option>
         </select>
@@ -257,19 +264,19 @@
     </form>
   </section>
 
-  <!-- MINIJUEGO TAREAS R�PIDAS -->
+  <!-- MINIJUEGO TAREAS RÁPIDAS -->
   <section id="game" class="section">
     <div class="game-box">
-      <h2>Modo: Tareas R&aacute;pidas</h2>
+      <h2>Modo: Tareas Rápidas</h2>
       
       <div class="game-mode-selector" style="margin-top:15px;">
-        <button class="game-mode-btn active" id="btnModeToday" onclick="selectGameMode('today')"> Tareas de Hoy</button>
-        <button class="game-mode-btn" id="btnModeSprint" onclick="selectGameMode('sprint')"> Modo Sprint (Semanal)</button>
+        <button class="game-mode-btn active" id="btnModeToday" onclick="selectGameMode('today')">Tareas de Hoy</button>
+        <button class="game-mode-btn" id="btnModeSprint" onclick="selectGameMode('sprint')">Modo Sprint (Semanal)</button>
       </div>
 
       <div id="gameContent">
-        <p id="gameModeDesc" style="margin-top:10px; color:var(--text-muted); font-size:0.9rem;">Resuelve las tareas r&aacute;pidas asignadas a la fecha de hoy.</p>
-        <button class="btn btn-primary" style="margin-top:20px;" onclick="startGame()"> Iniciar Minijuego</button>
+        <p id="gameModeDesc" style="margin-top:10px; color:var(--text-muted); font-size:0.9rem;">Resuelve las tareas rápidas asignadas a la fecha de hoy.</p>
+        <button class="btn btn-primary" style="margin-top:20px;" onclick="startGame()">Iniciar Minijuego</button>
       </div>
     </div>
   </section>
@@ -277,7 +284,7 @@
   <!-- MODAL EDITAR TAREA -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-content">
-      <h3 style="font-size:1.1rem; margin-bottom:15px; color:var(--primary);"> Editar Tarea</h3>
+      <h3 style="font-size:1.1rem; margin-bottom:15px; color:var(--primary);">Editar Tarea</h3>
       <form id="editTaskForm" onsubmit="saveEditedTask(event)">
         <input type="hidden" id="editTaskId">
         <div class="form-group">
@@ -287,24 +294,24 @@
         <div class="form-group">
           <label>Sub-tareas:</label>
           <div id="editSubtasksWrapper"></div>
-          <button type="button" class="btn btn-secondary" onclick="addSubtaskField('editSubtasksWrapper')" style="margin-top:8px;">+ A&ntilde;adir sub-tarea</button>
+          <button type="button" class="btn btn-secondary" onclick="addSubtaskField('editSubtasksWrapper')" style="margin-top:8px;">+ Añadir sub-tarea</button>
         </div>
         <div class="form-group">
-          <label>D&iacute;a asignado:</label>
+          <label>Día asignado:</label>
           <select id="editTaskDay" required>
             <option value="Lunes">Lunes</option>
             <option value="Martes">Martes</option>
-            <option value="Mi&eacute;rcoles">Mi&eacute;rcoles</option>
+            <option value="Miércoles">Miércoles</option>
             <option value="Jueves">Jueves</option>
             <option value="Viernes">Viernes</option>
-            <option value="S&aacute;bado">S&aacute;bado</option>
+            <option value="Sábado">Sábado</option>
             <option value="Domingo">Domingo</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Categor&iacute;a:</label>
+          <label>Categoría:</label>
           <select id="editTaskCategory" required>
-            <option value="R&aacute;pida">Tarea R&aacute;pida</option>
+            <option value="Rápida">Tarea Rápida</option>
             <option value="Media">Tarea Media</option>
             <option value="Demorada">Tarea Demorada</option>
           </select>
@@ -317,52 +324,51 @@
     </div>
   </div>
 
-  <!-- NAVEGACI�N INFERIOR (Estilo App M�vil) -->
+  <!-- NAVEGACIÓN INFERIOR (Estilo App Móvil) -->
   <nav>
     <button onclick="switchTab('dashboard', this)" class="active">
-      <span class="icon"></span>
+      <span class="icon">🏠</span>
       <span>Inicio</span>
     </button>
     <button onclick="switchTab('daily', this)">
-      <span class="icon"></span>
+      <span class="icon">📅</span>
       <span>Diarias</span>
     </button>
     <button onclick="switchTab('add', this)">
-      <span class="icon"></span>
-      <span>A&ntilde;adir</span>
+      <span class="icon">➕</span>
+      <span>Añadir</span>
     </button>
     <button onclick="switchTab('game', this)">
-      <span class="icon"></span>
-      <span>R&aacute;pidas</span>
+      <span class="icon">⚡</span>
+      <span>Rápidas</span>
     </button>
   </nav>
 
   <script>
-    const DAYS = ['Lunes', 'Martes', 'Mi&eacute;rcoles', 'Jueves', 'Viernes', 'S&aacute;bado', 'Domingo'];
-    const DAYS_RAW = ['Lunes', 'Martes', 'Mi�rcoles', 'Jueves', 'Viernes', 'S�bado', 'Domingo'];
+    const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
     // 20 Frases Motivacionales para rotar diariamente
     const MOTIVATIONAL_QUOTES = [
-      "No cuentes los d&iacute;as, haz que los d&iacute;as cuenten.",
+      "No cuentes los días, haz que los días cuenten.",
       "El secreto para salir adelante es empezar.",
-      "La procrastinaci&oacute;n hace que las cosas f&aacute;ciles sean dif&iacute;ciles y las dif&iacute;ciles m&aacute;s dif&iacute;ciles.",
-      "Haz hoy lo que otros no har&aacute;n para tener ma&ntilde;ana lo que otros no tendr&aacute;n.",
+      "La procrastinación hace que las cosas fáciles sean difíciles y las difíciles más difíciles.",
+      "Haz hoy lo que otros no harán para tener mañana lo que otros no tendrán.",
       "No tienes que ser grande para empezar, pero tienes que empezar para ser grande.",
-      "Un a&ntilde;o a partir de ahora desear&aacute;s haber empezado hoy.",
+      "Un año a partir de ahora desearás haber empezado hoy.",
       "El trabajo duro vence al talento cuando el talento no trabaja duro.",
-      "Peque&ntilde;os avances diarios suman grandes resultados.",
+      "Pequeños avances diarios suman grandes resultados.",
       "La disciplina es hacer lo que debes hacer incluso cuando no tienes ganas.",
       "El momento de empezar es AHORA.",
-      "Tu futuro se crea por lo que haces hoy, no ma&ntilde;ana.",
-      "No pares cuando est&eacute;s cansado, para cuando hayas terminado.",
-      "La mejor forma de predecir el futuro es cre&aacute;ndolo.",
-      "La constancia es la clave del &eacute;xito.",
-      "Lo &uacute;nico imposible es aquello que no intentas.",
-      "No dejes para ma&ntilde;ana lo que puedes hacer hoy.",
-      "El &eacute;xito es la suma de peque&ntilde;os esfuerzos repetidos d&iacute;a tras d&iacute;a.",
-      "Focus: enf&oacute;cate en tu meta y no te distraigas.",
-      "Cada tarea completada te acerca un paso m&aacute;s a tu meta.",
-      "Hazlo con pasi&oacute;n o no lo hagas."
+      "Tu futuro se crea por lo que haces hoy, no mañana.",
+      "No pares cuando estés cansado, para cuando hayas terminado.",
+      "La mejor forma de predecir el futuro es creándolo.",
+      "La constancia es la clave del éxito.",
+      "Lo único imposible es aquello que no intentas.",
+      "No dejes para mañana lo que puedes hacer hoy.",
+      "El éxito es la suma de pequeños esfuerzos repetidos día tras día.",
+      "Focus: enfócate en tu meta y no te distraigas.",
+      "Cada tarea completada te acerca un paso más a tu meta.",
+      "Hazlo con pasión o no lo hagas."
     ];
     
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
@@ -391,7 +397,7 @@
     function getCurrentDayRawName() {
       const now = new Date();
       const currentDayIdx = (now.getDay() + 6) % 7; // Lunes = 0
-      return DAYS_RAW[currentDayIdx];
+      return DAYS[currentDayIdx];
     }
 
     function switchTab(tabId, btnEl) {
@@ -426,10 +432,10 @@
       document.getElementById('weeklyProgressBar').style.width = `${weeklyPercent}%`;
       document.getElementById('weeklyCountText').innerText = `${completedTasksCount} de ${totalTasksCount} tareas completadas`;
 
-      // Calendario por D�as
+      // Calendario por Días
       const cal = document.getElementById('dashboardCalendar');
       cal.innerHTML = '';
-      DAYS_RAW.forEach((day, index) => {
+      DAYS.forEach((day, index) => {
         const dayTasks = tasks.filter(t => t.day === day);
         const completed = dayTasks.filter(t => t.completed).length;
         const total = dayTasks.length;
@@ -437,16 +443,16 @@
 
         cal.innerHTML += `
           <div class="calendar-day">
-            <header>${DAYS[index]}</header>
+            <header>${day}</header>
             <small style="color:var(--text-muted);">${completed}/${total}</small>
             <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
           </div>
         `;
       });
 
-      // R�cords Sprint
+      // Récords Sprint
       const recList = document.getElementById('recordsList');
-      recList.innerHTML = records.length === 0 ? '<li style="color:var(--text-muted);">Sin r&eacute;cords de Modo Sprint a&uacute;n</li>' : 
+      recList.innerHTML = records.length === 0 ? '<li style="color:var(--text-muted);">Sin récords de Modo Sprint aún</li>' : 
         records.slice(-5).reverse().map(r => `<li><b>${r.date}:</b> ${r.time}s (${r.count} tareas)</li>`).join('');
     }
 
@@ -457,14 +463,14 @@
       const container = document.getElementById('daysContainer');
       container.innerHTML = '';
 
-      DAYS_RAW.forEach((day, index) => {
+      DAYS.forEach((day, index) => {
         const dayTasks = tasks.filter(t => t.day === day);
         const completed = dayTasks.filter(t => t.completed).length;
         const total = dayTasks.length;
 
         container.innerHTML += `
-          <div class="day-card" onclick="openDay('${day}', '${DAYS[index]}', ${index})">
-            <h3>${DAYS[index]}</h3>
+          <div class="day-card" onclick="openDay('${day}', '${day}', ${index})">
+            <h3>${day}</h3>
             <div class="date-sub">${getFormattedDateForDay(index)}</div>
             <p style="color:${completed === total && total > 0 ? 'var(--success)' : 'var(--text)'};">
               ${completed} de ${total}
@@ -478,7 +484,7 @@
       selectedDay = rawDay;
       document.getElementById('dailyView').style.display = 'none';
       document.getElementById('dayDetailView').style.display = 'block';
-      document.getElementById('selectedDayTitle').innerHTML = `${formattedDay} (${getFormattedDateForDay(index)})`;
+      document.getElementById('selectedDayTitle').innerText = `${formattedDay} (${getFormattedDateForDay(index)})`;
       renderDayTasks();
     }
 
@@ -489,7 +495,7 @@
 
       let filtered = tasks.filter(t => t.day === selectedDay);
       if(catFilter !== 'ALL') {
-        filtered = filtered.filter(t => t.category.includes(catFilter.replace('&bsp;', '').replace('&aacute;', '�')));
+        filtered = filtered.filter(t => t.category === catFilter);
       }
 
       if(filtered.length === 0) {
@@ -505,7 +511,7 @@
           </div>
         `).join('');
 
-        const catClass = task.category.normalize("NFD").replace(/[-]/g, "");
+        const catClass = task.category.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
         container.innerHTML += `
           <div class="task-card">
@@ -516,8 +522,8 @@
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <span class="badge badge-${catClass}">${task.category}</span>
-                <button class="btn btn-edit" onclick="openEditModal('${task.id}')"></button>
-                <button class="btn btn-danger" onclick="deleteTask('${task.id}')"></button>
+                <button class="btn btn-edit" onclick="openEditModal('${task.id}')">✏️</button>
+                <button class="btn btn-danger" onclick="deleteTask('${task.id}')">🗑️</button>
               </div>
             </div>
             ${subtasksHtml ? `<div class="subtasks-container">${subtasksHtml}</div>` : ''}
@@ -547,7 +553,7 @@
     }
 
     function deleteTask(id) {
-      if(confirm('�Seguro que deseas eliminar esta tarea?')) {
+      if(confirm('¿Seguro que deseas eliminar esta tarea?')) {
         tasks = tasks.filter(t => t.id !== id);
         saveToStorage();
         renderDayTasks();
@@ -571,7 +577,7 @@
           editWrapper.innerHTML += `
             <div class="subtask-input-group">
               <input type="text" class="subtask-input" value="${st.name}" placeholder="Nombre sub-tarea">
-              <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>
+              <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>
             </div>
           `;
         });
@@ -579,7 +585,7 @@
         editWrapper.innerHTML = `
           <div class="subtask-input-group">
             <input type="text" class="subtask-input" placeholder="Nombre sub-tarea">
-            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>
           </div>
         `;
       }
@@ -605,7 +611,6 @@
       const updatedSubtasks = [];
       subInputs.forEach(input => {
         if(input.value.trim() !== '') {
-          // Mantener estado si ya exist�a
           const existing = task.subtasks.find(s => s.name === input.value.trim());
           updatedSubtasks.push({
             name: input.value.trim(),
@@ -620,14 +625,14 @@
       renderDayTasks();
     }
 
-    // FORMULARIO A�ADIR
+    // FORMULARIO AÑADIR
     function addSubtaskField(containerId) {
       const wrapper = document.getElementById(containerId);
       const div = document.createElement('div');
       div.className = 'subtask-input-group';
       div.innerHTML = `
         <input type="text" class="subtask-input" placeholder="Nombre sub-tarea">
-        ${containerId === 'editSubtasksWrapper' ? '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()"></button>' : ''}
+        ${containerId === 'editSubtasksWrapper' ? '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>' : ''}
       `;
       wrapper.appendChild(div);
     }
@@ -659,11 +664,11 @@
       saveToStorage();
 
       document.getElementById('taskForm').reset();
-      document.getElementById('subtasksWrapper').innerHTML = `<div class="subtask-input-group"><input type="text" class="subtask-input" placeholder="Ej. Leer cap�tulo 1"></div>`;
-      alert('�Tarea agregada exitosamente!');
+      document.getElementById('subtasksWrapper').innerHTML = `<div class="subtask-input-group"><input type="text" class="subtask-input" placeholder="Ej. Leer capítulo 1"></div>`;
+      alert('¡Tarea agregada exitosamente!');
     }
 
-    // MINIJUEGO TAREAS R�PIDAS (MODO HOY VS MODO SPRINT)
+    // MINIJUEGO TAREAS RÁPIDAS
     function selectGameMode(mode) {
       selectedGameMode = mode;
       document.getElementById('btnModeToday').classList.toggle('active', mode === 'today');
@@ -671,22 +676,22 @@
       
       const desc = document.getElementById('gameModeDesc');
       if(mode === 'today') {
-        desc.innerText = 'Resuelve las tareas r�pidas asignadas a la fecha de hoy.';
+        desc.innerText = 'Resuelve las tareas rápidas asignadas a la fecha de hoy.';
       } else {
-        desc.innerText = 'Modo Sprint: Resuelve TODAS las tareas r�pidas de toda la semana de corrido (Tributa a los R�cords).';
+        desc.innerText = 'Modo Sprint: Resuelve TODAS las tareas rápidas de toda la semana de corrido (Tributa a los Récords).';
       }
     }
 
     function startGame() {
       if(selectedGameMode === 'today') {
         const todayRaw = getCurrentDayRawName();
-        gameTasks = tasks.filter(t => t.category.includes('R�pida') && t.day === todayRaw && !t.completed);
-      } else { // sprint mode (todas las r�pidas de la semana)
-        gameTasks = tasks.filter(t => t.category.includes('R�pida') && !t.completed);
+        gameTasks = tasks.filter(t => t.category === 'Rápida' && t.day === todayRaw && !t.completed);
+      } else { 
+        gameTasks = tasks.filter(t => t.category === 'Rápida' && !t.completed);
       }
 
       if(gameTasks.length === 0) {
-        alert(selectedGameMode === 'today' ? 'No hay tareas r�pidas pendientes para el d�a de hoy.' : 'No hay tareas r�pidas pendientes en toda la semana.');
+        alert(selectedGameMode === 'today' ? 'No hay tareas rápidas pendientes para el día de hoy.' : 'No hay tareas rápidas pendientes en toda la semana.');
         return;
       }
 
@@ -710,7 +715,6 @@
       if(!current) {
         clearInterval(timerInterval);
         
-        // Solo guardamos en r�cord si es en MODO SPRINT (todas las r�pidas)
         if(selectedGameMode === 'sprint') {
           records.push({
             date: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}),
@@ -721,9 +725,9 @@
         }
 
         gameContent.innerHTML = `
-          <h3 style="color:var(--success);"> �Felicidades! Completaste el bloque de tareas r&aacute;pidas.</h3>
+          <h3 style="color:var(--success);">🎉 ¡Felicidades! Completaste el bloque de tareas rápidas.</h3>
           <p style="margin:10px 0;">Tiempo total: <b>${secondsElapsed} segundos</b></p>
-          ${selectedGameMode === 'sprint' ? '<p style="font-size:0.8rem; color:var(--primary); font-weight:bold;"> �Nuevo R&eacute;cord Registrado!</p>' : ''}
+          ${selectedGameMode === 'sprint' ? '<p style="font-size:0.8rem; color:var(--primary); font-weight:bold;">🏆 ¡Nuevo Récord Registrado!</p>' : ''}
           <button class="btn btn-primary" style="margin-top:15px;" onclick="startGame()">Volver a Jugar</button>
         `;
         return;
@@ -733,8 +737,8 @@
         <div class="timer" id="timerDisplay">${secondsElapsed}s</div>
         <p style="color:var(--text-muted);">Tarea ${currentGameIndex + 1} de ${gameTasks.length} (${selectedGameMode === 'today' ? 'Hoy' : 'Sprint Semanal'})</p>
         <h2 style="margin: 12px 0; color: var(--primary); font-size:1.4rem;">${current.name}</h2>
-        <p style="font-size:0.85rem; margin-bottom:15px;">D&iacute;a asignado: ${current.day}</p>
-        <button class="btn btn-primary" onclick="completeGameTask()"> Completar y Siguiente</button>
+        <p style="font-size:0.85rem; margin-bottom:15px;">Día asignado: ${current.day}</p>
+        <button class="btn btn-primary" onclick="completeGameTask()">✅ Completar y Siguiente</button>
       `;
     }
 
@@ -751,7 +755,7 @@
       renderGameTask();
     }
 
-    // EXPORTAR / IMPORTAR
+    // EXPORTAR / IMPORTAR DATOS
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, records }));
       const downloadAnchor = document.createElement('a');
@@ -771,7 +775,7 @@
           if (imported.records) records = imported.records;
           saveToStorage();
           renderDashboard();
-          alert('�Datos importados correctamente!');
+          alert('¡Datos importados correctamente!');
         } catch(err) {
           alert('Error al leer el archivo JSON.');
         }
