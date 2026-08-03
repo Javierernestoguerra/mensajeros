@@ -16,13 +16,34 @@
       --success: #10b981;
       --danger: #ef4444;
       --warning: #f59e0b;
+      --nav-bg: #ffffff;
+      --input-bg: #ffffff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    [data-theme="dark"] {
+      --bg-color: #111827;
+      --card-bg: #1f2937;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --border: #374151;
+      --success: #059669;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --nav-bg: #1f2937;
+      --input-bg: #374151;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; transition: background-color 0.2s, color 0.2s; }
     body { background-color: var(--bg-color); color: var(--text); padding: 12px; padding-bottom: 80px; }
 
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 5px 0; }
-    h1 { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 5px 0; gap: 8px; flex-wrap: wrap; }
+
+    /* Entorno Selector & Tema */
+    .top-controls { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: space-between; margin-bottom: 8px; }
+    .env-select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-weight: 600; font-size: 0.9rem; flex: 1; }
+    .theme-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
 
     /* Navegación inferior / adaptada a celular (3 pestañas) */
     nav {
@@ -30,7 +51,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: var(--card-bg);
+      background: var(--nav-bg);
       display: flex;
       justify-content: space-around;
       border-top: 1px solid var(--border);
@@ -74,7 +95,7 @@
 
     /* Progreso General Semanal */
     .weekly-progress-card {
-      background: #fafafa;
+      background: rgba(0,0,0,0.02);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 14px;
@@ -83,17 +104,17 @@
     .weekly-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .weekly-progress-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
     .weekly-progress-percent { font-size: 0.95rem; font-weight: 800; color: var(--primary); }
-    .weekly-progress-bar { background: #e5e7eb; height: 12px; border-radius: 6px; overflow: hidden; }
+    .weekly-progress-bar { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; }
     .weekly-progress-fill { background: linear-gradient(90deg, #10b981, #059669); height: 100%; width: 0%; transition: width 0.4s ease; }
 
     /* Dashboard & Calendario */
     .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
-    .calendar-day { border: 1px solid var(--border); padding: 10px 5px; border-radius: 8px; text-align: center; background: #fafafa; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .calendar-day { border: 1px solid var(--border); padding: 10px 5px; border-radius: 8px; text-align: center; background: rgba(0,0,0,0.01); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
     .calendar-day:hover { transform: scale(1.02); box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-color: var(--primary); }
-    .calendar-day.today-highlight { background: rgba(79, 70, 229, 0.12); border: 2px solid var(--primary); }
+    .calendar-day.today-highlight { background: rgba(79, 70, 229, 0.15); border: 2px solid var(--primary); }
     .calendar-day header { font-weight: bold; font-size: 0.8rem; justify-content: center; color: var(--text); word-break: break-word; }
-    .progress-bar { background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-bar { background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
     .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
 
     /* Tareas y Subtareas Contraíbles (Acordeón) */
@@ -102,7 +123,7 @@
     details > summary::before { content: '▶'; display: inline-block; transition: transform 0.2s; font-size: 0.8em; color: var(--primary); }
     details[open] > summary::before { transform: rotate(90deg); }
     
-    .add-task-container { background: #fafafa; border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 20px; }
+    .add-task-container { background: rgba(0,0,0,0.01); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 20px; }
     .add-task-container > summary { font-size: 0.95rem; color: var(--primary); padding-bottom: 5px; }
     
     .subtasks-details { margin-top: 6px; margin-left: 24px; }
@@ -110,21 +131,25 @@
     .subtasks-details[open] > summary { margin-bottom: 4px; }
 
     /* Tarjetas de Tarea Compactas */
-    .task-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: #fff; }
+    .task-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: var(--card-bg); }
     .task-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
     .task-title { display: flex; align-items: center; gap: 6px; font-weight: 600; word-break: break-word; font-size: 0.88rem; }
-    .subtasks-container { font-size: 0.82rem; color: #4b5563; display: flex; flex-direction: column; gap: 4px; padding-left: 8px; border-left: 2px solid var(--border); }
+    .subtasks-container { font-size: 0.82rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; padding-left: 8px; border-left: 2px solid var(--border); }
 
-    .day-badge { background: #e5e7eb; color: var(--text-muted); border-radius: 12px; padding: 2px 7px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.02em; }
+    .day-badge { background: var(--border); color: var(--text); border-radius: 12px; padding: 2px 7px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.02em; }
     .badge { padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; }
     .badge-Rapida { background: #dbeafe; color: #1e40af; }
     .badge-Media { background: #fef3c7; color: #92400e; }
     .badge-Demorada { background: #fee2e2; color: #991b1b; }
 
+    [data-theme="dark"] .badge-Rapida { background: #1e3a8a; color: #93c5fd; }
+    [data-theme="dark"] .badge-Media { background: #78350f; color: #fde68a; }
+    [data-theme="dark"] .badge-Demorada { background: #7f1d1d; color: #fca5a5; }
+
     /* Formulario */
     .form-group { margin-bottom: 10px; }
     .form-group label { display: block; margin-bottom: 3px; font-weight: 600; font-size: 0.8rem; }
-    .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; }
+    .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; background: var(--input-bg); color: var(--text); }
     .subtask-input-group { display: flex; gap: 6px; margin-top: 4px; align-items: center; }
     
     /* Botones */
@@ -133,12 +158,12 @@
     .btn-primary:active { background: var(--primary-hover); }
     .btn-danger { background: var(--danger); color: white; width: auto; padding: 4px 6px; font-size: 0.75rem; border-radius: 4px; }
     .btn-edit { background: #3b82f6; color: white; width: auto; padding: 4px 6px; font-size: 0.75rem; border-radius: 4px; }
-    .btn-secondary { background: #e5e7eb; color: var(--text); width: auto; font-size: 0.8rem; }
+    .btn-secondary { background: var(--border); color: var(--text); width: auto; font-size: 0.8rem; }
 
     /* Minijuego */
     .game-box { text-align: center; padding: 15px 5px; }
     .game-mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-    .game-mode-btn { flex: 1; padding: 10px; border: 1px solid var(--border); background: #fafafa; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    .game-mode-btn { flex: 1; padding: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.01); border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--text); }
     .game-mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
     
     .timer { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin: 15px 0; font-variant-numeric: tabular-nums; }
@@ -152,17 +177,23 @@
     /* Modal Editar */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 15px; }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: #fff; border-radius: 12px; width: 100%; max-width: 500px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background: var(--card-bg); border-radius: 12px; width: 100%; max-width: 500px; padding: 20px; max-height: 90vh; overflow-y: auto; color: var(--text); }
 
     @media (min-width: 640px) {
       body { max-width: 600px; margin: 0 auto; padding: 20px; padding-bottom: 90px; }
     }
   </style>
 </head>
-<body>
+<body data-theme="light">
 
   <header>
-    <h1>Mis Tareas Local</h1>
+    <div class="top-controls">
+      <select id="environmentSelect" class="env-select" onchange="changeEnvironment(this.value)">
+        <!-- Dinámico -->
+      </select>
+      <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Oscuro</button>
+      <button class="theme-btn" onclick="addNewEnvironment()" title="Crear entorno">➕ Entorno</button>
+    </div>
   </header>
 
   <!-- PÁGINA PRINCIPAL / DASHBOARD -->
@@ -395,10 +426,82 @@
       "Cada tarea completada te acerca un paso más a tu meta.",
       "Hazlo con pasión o no lo hagas."
     ];
+
+    // Entornos de trabajo (por defecto: Trabajo, Personal)
+    let environments = JSON.parse(localStorage.getItem('environments')) || ['Trabajo', 'Personal'];
+    let currentEnv = localStorage.getItem('currentEnv') || environments[0];
     
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    let records = JSON.parse(localStorage.getItem('records')) || [];
-    
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+    let records = JSON.parse(localStorage.getItem('records')) || {};
+
+    // Tema
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', currentTheme);
+    updateThemeButtonText();
+
+    function toggleTheme() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      updateThemeButtonText();
+    }
+
+    function updateThemeButtonText() {
+      const btn = document.getElementById('themeToggleBtn');
+      if(currentTheme === 'dark') {
+        btn.innerHTML = '☀️ Claro';
+      } else {
+        btn.innerHTML = '🌙 Oscuro';
+      }
+    }
+
+    function initEnvironmentsSelect() {
+      const select = document.getElementById('environmentSelect');
+      select.innerHTML = '';
+      environments.forEach(env => {
+        const opt = document.createElement('option');
+        opt.value = env;
+        opt.textContent = env;
+        if(env === currentEnv) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function changeEnvironment(env) {
+      currentEnv = env;
+      localStorage.setItem('currentEnv', currentEnv);
+      renderDashboard();
+      if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+      if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
+    }
+
+    function addNewEnvironment() {
+      const name = prompt('Nombre del nuevo entorno (ej. Estudio, Proyectos):');
+      if(name && name.trim() !== '') {
+        const cleanName = name.trim();
+        if(!environments.includes(cleanName)) {
+          environments.push(cleanName);
+          localStorage.setItem('environments', JSON.stringify(environments));
+          initEnvironmentsSelect();
+          changeEnvironment(cleanName);
+        } else {
+          alert('Este entorno ya existe.');
+        }
+      }
+    }
+
+    initEnvironmentsSelect();
+
+    function getEnvTasks() {
+      if(!tasks[currentEnv]) tasks[currentEnv] = [];
+      return tasks[currentEnv];
+    }
+
+    function getEnvRecords() {
+      if(!records[currentEnv]) records[currentEnv] = [];
+      return records[currentEnv];
+    }
+
     function checkWeeklyReset() {
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -407,14 +510,15 @@
       
       const lastReset = localStorage.getItem('lastResetWeek');
       if (lastReset !== yearWeekKey) {
-        tasks.forEach(t => {
-          // No reiniciar tareas Extra, no son cíclicas
-          if(t.day !== 'Extra') {
-            t.completed = false;
-            if (t.subtasks) {
-              t.subtasks.forEach(st => st.completed = false);
+        Object.keys(tasks).forEach(env => {
+          tasks[env].forEach(t => {
+            if(t.day !== 'Extra') {
+              t.completed = false;
+              if (t.subtasks) {
+                t.subtasks.forEach(st => st.completed = false);
+              }
             }
-          }
+          });
         });
         localStorage.setItem('tasks', JSON.stringify(tasks));
         localStorage.setItem('lastResetWeek', yearWeekKey);
@@ -424,7 +528,6 @@
     checkWeeklyReset();
 
     let selectedDay = null;
-
     let selectedGameMode = 'today';
     let gameTasks = [];
     let currentGameIndex = 0;
@@ -466,7 +569,7 @@
     }
 
     function getFormattedDateForDay(dayIndex) {
-      if(dayIndex === 7) return 'No cíclico'; // Extra
+      if(dayIndex === 7) return 'No cíclico'; 
       const now = new Date();
       const currentDayIdx = (now.getDay() + 6) % 7; 
       const diff = dayIndex - currentDayIdx;
@@ -479,8 +582,8 @@
     function renderDashboard() {
       loadDailyQuote();
 
-      // Semanal (excluye Extra)
-      const weeklyTasks = tasks.filter(t => t.day !== 'Extra');
+      const envTasks = getEnvTasks();
+      const weeklyTasks = envTasks.filter(t => t.day !== 'Extra');
       const totalTasksCount = weeklyTasks.length;
       const completedTasksCount = weeklyTasks.filter(t => t.completed).length;
       const weeklyPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
@@ -494,32 +597,34 @@
       const cal = document.getElementById('dashboardCalendar');
       cal.innerHTML = '';
       ALL_DAYS.forEach((day, index) => {
-        const dayTasks = tasks.filter(t => t.day === day);
+        const dayTasks = envTasks.filter(t => t.day === day);
         const completed = dayTasks.filter(t => t.completed).length;
         const total = dayTasks.length;
         const percent = total > 0 ? (completed / total) * 100 : 0;
         const isToday = (day === currentDayName);
         
+        // En inicio los nombres de los días van enteros
         let label = day === 'Extra' ? 'Extra ⭐' : day;
 
         cal.innerHTML += `
           <div class="calendar-day ${isToday ? 'today-highlight' : ''}" onclick="openDay('${day}', '${label}', ${index})">
-            <header>${DAY_ABBREV[day]} ${isToday ? '📍' : ''}</header>
+            <header>${day} ${isToday ? '📍' : ''}</header>
             <small style="color:var(--text-muted); font-size:0.75rem;">${completed}/${total}</small>
             <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
           </div>
         `;
       });
 
+      const envRecords = getEnvRecords();
       const recList = document.getElementById('recordsList');
-      recList.innerHTML = records.length === 0 ? '<li style="color:var(--text-muted);">Sin récords de Modo Sprint aún</li>' : 
-        records.slice(-5).reverse().map(r => `<li><b>${r.date}:</b> ${r.time}s (${r.count} tareas)</li>`).join('');
+      recList.innerHTML = envRecords.length === 0 ? '<li style="color:var(--text-muted);">Sin récords de Modo Sprint aún</li>' : 
+        envRecords.slice(-5).reverse().map(r => `<li><b>${r.date}:</b> ${r.time}s (${r.count} tareas)</li>`).join('');
     }
 
     function openDay(rawDay, formattedDay, index) {
       selectedDay = rawDay;
-      
-      const dayTasks = tasks.filter(t => t.day === rawDay);
+      const envTasks = getEnvTasks();
+      const dayTasks = envTasks.filter(t => t.day === rawDay);
       const completed = dayTasks.filter(t => t.completed).length;
       const total = dayTasks.length;
       
@@ -541,7 +646,7 @@
           </div>
         `).join('');
         
-        // Se quitó la lógica que lo abría, ahora siempre cerrado por defecto
+        // Sub-tareas siempre cerradas por defecto
         subtasksHtml = `
           <details class="subtasks-details">
             <summary>Sub-tareas (${task.subtasks.length})</summary>
@@ -576,16 +681,17 @@
     function renderAllTasksList() {
       const allContainer = document.getElementById('allTasksContainer');
       const badge = document.getElementById('allTasksCountBadge');
+      const envTasks = getEnvTasks();
       allContainer.innerHTML = '';
-      badge.innerText = `${tasks.length} tareas`;
+      badge.innerText = `${envTasks.length} tareas`;
 
-      if(tasks.length === 0) {
+      if(envTasks.length === 0) {
         allContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:10px;">No hay tareas registradas.</p>';
         return;
       }
 
       // Ordenar tareas: Lunes -> Extra
-      const sortedTasks = [...tasks].sort((a, b) => (DAY_ORDER[a.day] || 99) - (DAY_ORDER[b.day] || 99));
+      const sortedTasks = [...envTasks].sort((a, b) => (DAY_ORDER[a.day] || 99) - (DAY_ORDER[b.day] || 99));
 
       sortedTasks.forEach(task => {
         allContainer.innerHTML += generateTaskCardHtml(task);
@@ -595,14 +701,15 @@
     function renderDayTasks() {
       const catFilter = document.getElementById('categoryFilter').value;
       const container = document.getElementById('tasksListContainer');
+      const envTasks = getEnvTasks();
       container.innerHTML = '';
 
-      let filtered = tasks.filter(t => t.day === selectedDay);
+      let filtered = envTasks.filter(t => t.day === selectedDay);
       if(catFilter !== 'ALL') {
         filtered = filtered.filter(t => t.category === catFilter);
       }
 
-      const dayTasks = tasks.filter(t => t.day === selectedDay);
+      const dayTasks = envTasks.filter(t => t.day === selectedDay);
       document.getElementById('selectedDayCount').innerText = `${dayTasks.filter(t => t.completed).length}/${dayTasks.length} tareas`;
 
       if(filtered.length === 0) {
@@ -616,7 +723,8 @@
     }
 
     function toggleTask(id) {
-      const task = tasks.find(t => t.id === id);
+      const envTasks = getEnvTasks();
+      const task = envTasks.find(t => t.id === id);
       if(task) {
         task.completed = !task.completed;
         if(task.subtasks) task.subtasks.forEach(s => s.completed = task.completed);
@@ -628,7 +736,8 @@
     }
 
     function toggleSubtask(taskId, subIdx) {
-      const task = tasks.find(t => t.id === taskId);
+      const envTasks = getEnvTasks();
+      const task = envTasks.find(t => t.id === taskId);
       if(task) {
         task.subtasks[subIdx].completed = !task.subtasks[subIdx].completed;
         task.completed = task.subtasks.every(s => s.completed);
@@ -641,7 +750,8 @@
 
     function deleteTask(id) {
       if(confirm('¿Seguro que deseas eliminar esta tarea?')) {
-        tasks = tasks.filter(t => t.id !== id);
+        let envTasks = getEnvTasks();
+        tasks[currentEnv] = envTasks.filter(t => t.id !== id);
         saveToStorage();
         if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
         if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
@@ -651,7 +761,8 @@
 
     // EDITAR TAREA (MODAL)
     function openEditModal(id) {
-      const task = tasks.find(t => t.id === id);
+      const envTasks = getEnvTasks();
+      const task = envTasks.find(t => t.id === id);
       if(!task) return;
 
       document.getElementById('editTaskId').value = task.id;
@@ -689,7 +800,8 @@
     function saveEditedTask(e) {
       e.preventDefault();
       const id = document.getElementById('editTaskId').value;
-      const task = tasks.find(t => t.id === id);
+      const envTasks = getEnvTasks();
+      const task = envTasks.find(t => t.id === id);
       if(!task) return;
 
       task.name = document.getElementById('editTaskName').value;
@@ -751,7 +863,8 @@
         completed: false
       };
 
-      tasks.push(newTask);
+      if(!tasks[currentEnv]) tasks[currentEnv] = [];
+      tasks[currentEnv].push(newTask);
       saveToStorage();
 
       document.getElementById('taskForm').reset();
@@ -779,11 +892,12 @@
     }
 
     function startGame() {
+      const envTasks = getEnvTasks();
       if(selectedGameMode === 'today') {
         const todayRaw = getCurrentDayRawName();
-        gameTasks = tasks.filter(t => t.category === 'Rápida' && t.day === todayRaw && !t.completed);
+        gameTasks = envTasks.filter(t => t.category === 'Rápida' && t.day === todayRaw && !t.completed);
       } else { 
-        gameTasks = tasks.filter(t => t.category === 'Rápida' && !t.completed);
+        gameTasks = envTasks.filter(t => t.category === 'Rápida' && !t.completed);
       }
 
       if(gameTasks.length === 0) {
@@ -812,7 +926,8 @@
         clearInterval(timerInterval);
         
         if(selectedGameMode === 'sprint') {
-          records.push({
+          if(!records[currentEnv]) records[currentEnv] = [];
+          records[currentEnv].push({
             date: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}),
             time: secondsElapsed,
             count: gameTasks.length
@@ -841,7 +956,8 @@
 
     function completeGameTask() {
       const current = gameTasks[currentGameIndex];
-      const mainTask = tasks.find(t => t.id === current.id);
+      const envTasks = getEnvTasks();
+      const mainTask = envTasks.find(t => t.id === current.id);
       if(mainTask) {
         mainTask.completed = true;
         if(mainTask.subtasks) mainTask.subtasks.forEach(s => s.completed = true);
@@ -856,7 +972,7 @@
 
     // EXPORTAR / IMPORTAR DATOS
     function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, records }));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, records, environments }));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", "backup_tareas.json");
@@ -872,7 +988,9 @@
           const imported = JSON.parse(e.target.result);
           if (imported.tasks) tasks = imported.tasks;
           if (imported.records) records = imported.records;
+          if (imported.environments) environments = imported.environments;
           saveToStorage();
+          initEnvironmentsSelect();
           renderDashboard();
           alert('¡Datos importados correctamente!');
         } catch(err) {
@@ -887,4 +1005,3 @@
   </script>
 </body>
 </html>
-
