@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -90,25 +89,30 @@
     /* Dashboard & Calendario */
     .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
-    .calendar-day { border: 1px solid var(--border); padding: 10px; border-radius: 8px; text-align: center; background: #fafafa; }
+    .calendar-day { border: 1px solid var(--border); padding: 10px; border-radius: 8px; text-align: center; background: #fafafa; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .calendar-day:hover { transform: scale(1.02); box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-color: var(--primary); }
     .calendar-day.today-highlight { background: rgba(79, 70, 229, 0.12); border: 2px solid var(--primary); }
     .calendar-day header { font-weight: bold; font-size: 0.85rem; justify-content: center; color: var(--text); }
     .progress-bar { background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
     .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
 
-    /* Tareas Diarias */
-    .days-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-    .day-card { border: 1px solid var(--border); padding: 12px; border-radius: 10px; cursor: pointer; background: #fafafa; transition: all 0.2s; text-align: center; }
-    .day-card.today-highlight { background: rgba(79, 70, 229, 0.12); border: 2px solid var(--primary); }
-    .day-card:active { transform: scale(0.98); }
-    .day-card h3 { font-size: 1rem; color: var(--primary); }
-    .day-card .date-sub { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
-    .day-card p { font-size: 0.85rem; font-weight: 600; }
+    /* Tareas y Subtareas Contraíbles (Acordeón) */
+    details > summary { cursor: pointer; font-weight: 600; color: var(--text); font-size: 0.9rem; user-select: none; display: flex; align-items: center; gap: 6px; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; } /* Ocultar flecha nativa */
+    details > summary::before { content: '▶'; display: inline-block; transition: transform 0.2s; font-size: 0.8em; color: var(--primary); }
+    details[open] > summary::before { transform: rotate(90deg); }
+    
+    .add-task-container { background: #fafafa; border: 1px solid var(--border); padding: 14px; border-radius: 10px; margin-bottom: 20px; }
+    .add-task-container > summary { font-size: 1rem; color: var(--primary); padding-bottom: 5px; }
+    
+    .subtasks-details { margin-top: 8px; margin-left: 28px; }
+    .subtasks-details > summary { font-size: 0.85rem; color: var(--text-muted); }
+    .subtasks-details[open] > summary { margin-bottom: 6px; }
 
     .task-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff; }
     .task-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .task-title { display: flex; align-items: center; gap: 8px; font-weight: 600; word-break: break-word; }
-    .subtasks-container { margin-left: 28px; margin-top: 8px; font-size: 0.88rem; color: #4b5563; display: flex; flex-direction: column; gap: 6px; }
+    .subtasks-container { font-size: 0.88rem; color: #4b5563; display: flex; flex-direction: column; gap: 6px; padding-left: 10px; border-left: 2px solid var(--border); }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
     .badge-Rapida { background: #dbeafe; color: #1e40af; }
@@ -179,10 +183,9 @@
       <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:right;" id="weeklyCountText">0 de 0 tareas completadas</div>
     </div>
 
-    <h2 style="font-size:1.1rem; margin-bottom:12px;">Resumen Visual</h2>
+    <h2 style="font-size:1.1rem; margin-bottom:12px;">Estado Semanal (Toca un día para ver)</h2>
     <div class="dashboard-grid">
       <div>
-        <h3 style="font-size:0.95rem; color:var(--text-muted);">Estado Semanal por Días</h3>
         <div class="calendar-grid" id="dashboardCalendar"></div>
       </div>
       <div>
@@ -199,81 +202,79 @@
     </div>
   </section>
 
-  <!-- TAREAS DIARIAS (INTEGRADO CON "TODAS" Y FORMULARIO DE AÑADIR) -->
-  <section id="daily" class="section">
-    <h2>Tareas Diarias</h2>
-    <div id="dailyView" style="margin-top:12px;">
-      <div class="days-list" id="daysContainer"></div>
+  <!-- VISTA DE DÍA ESPECÍFICO (Se accede desde Inicio) -->
+  <section id="day-view" class="section">
+    <button class="btn btn-secondary" onclick="switchTab('dashboard')" style="margin-bottom: 12px; font-size: 0.85rem; padding: 8px;">← Volver al Inicio</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+      <h3 id="selectedDayTitle" style="font-size:1.2rem; color:var(--primary);"></h3>
+      <span id="selectedDayCount" style="font-size: 0.8rem; background: var(--border); padding: 2px 8px; border-radius: 10px; font-weight:600;"></span>
+    </div>
+    <div style="margin: 12px 0;">
+      <label style="font-size:0.85rem; font-weight:600;">Filtrar Categoría: </label>
+      <select id="categoryFilter" onchange="renderDayTasks()" style="padding:6px; border-radius:6px; border:1px solid var(--border);">
+        <option value="ALL">Todas</option>
+        <option value="Rápida">Rápida</option>
+        <option value="Media">Media</option>
+        <option value="Demorada">Demorada</option>
+      </select>
+    </div>
+    <div id="tasksListContainer"></div>
+  </section>
 
-      <!-- Apartado "Todas" y Añadir Tarea Integrado -->
-      <div style="margin-top: 25px; border-top: 2px solid var(--border); padding-top: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 1.1rem; color: var(--primary);">📋 Todas las Tareas</h3>
-          <span id="allTasksCountBadge" style="font-size: 0.8rem; background: var(--border); padding: 2px 8px; border-radius: 10px; font-weight:600;">0 tareas</span>
-        </div>
-        
-        <!-- Formulario Integrado para Añadir Tarea -->
-        <div style="background: #fafafa; border: 1px solid var(--border); padding: 14px; border-radius: 10px; margin-bottom: 15px;">
-          <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--text);">➕ Añadir Nueva Tarea</h4>
-          <form id="taskForm" onsubmit="saveTask(event)">
-            <div class="form-group">
-              <label>Nombre de la Tarea:</label>
-              <input type="text" id="taskName" required placeholder="Ej. Estudiar HTML">
-            </div>
-            <div class="form-group">
-              <label>Sub-tareas (Opcional):</label>
-              <div id="subtasksWrapper">
-                <div class="subtask-input-group">
-                  <input type="text" class="subtask-input" placeholder="Ej. Leer capítulo 1">
-                </div>
+  <!-- PESTAÑA: TAREAS (Todas las tareas y Añadir) -->
+  <section id="tasks" class="section">
+    <h2 style="margin-bottom: 15px;">Gestión de Tareas</h2>
+    
+    <!-- Formulario Integrado y Contraíble para Añadir Tarea -->
+    <details class="add-task-container">
+      <summary>➕ Añadir Nueva Tarea</summary>
+      <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+        <form id="taskForm" onsubmit="saveTask(event)">
+          <div class="form-group">
+            <label>Nombre de la Tarea:</label>
+            <input type="text" id="taskName" required placeholder="Ej. Estudiar HTML">
+          </div>
+          <div class="form-group">
+            <label>Sub-tareas (Opcional):</label>
+            <div id="subtasksWrapper">
+              <div class="subtask-input-group">
+                <input type="text" class="subtask-input" placeholder="Ej. Leer capítulo 1">
               </div>
-              <button type="button" class="btn btn-secondary" onclick="addSubtaskField('subtasksWrapper')" style="margin-top:6px; font-size:0.8rem; padding:6px;">+ Añadir sub-tarea</button>
             </div>
-            <div class="form-group">
-              <label>Día asignado:</label>
-              <select id="taskDay" required>
-                <option value="Lunes">Lunes</option>
-                <option value="Martes">Martes</option>
-                <option value="Miércoles">Miércoles</option>
-                <option value="Jueves">Jueves</option>
-                <option value="Viernes">Viernes</option>
-                <option value="Sábado">Sábado</option>
-                <option value="Domingo">Domingo</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Categoría:</label>
-              <select id="taskCategory" required>
-                <option value="Rápida">Tarea Rápida</option>
-                <option value="Media">Tarea Media</option>
-                <option value="Demorada">Tarea Demorada</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary" style="padding: 8px; font-size: 0.9rem;">Guardar Tarea</button>
-          </form>
-        </div>
-
-        <!-- Lista general de todas las tareas -->
-        <div id="allTasksContainer"></div>
+            <button type="button" class="btn btn-secondary" onclick="addSubtaskField('subtasksWrapper')" style="margin-top:6px; font-size:0.8rem; padding:6px;">+ Añadir sub-tarea</button>
+          </div>
+          <div class="form-group">
+            <label>Día asignado:</label>
+            <select id="taskDay" required>
+              <option value="Lunes">Lunes</option>
+              <option value="Martes">Martes</option>
+              <option value="Miércoles">Miércoles</option>
+              <option value="Jueves">Jueves</option>
+              <option value="Viernes">Viernes</option>
+              <option value="Sábado">Sábado</option>
+              <option value="Domingo">Domingo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Categoría:</label>
+            <select id="taskCategory" required>
+              <option value="Rápida">Tarea Rápida</option>
+              <option value="Media">Tarea Media</option>
+              <option value="Demorada">Tarea Demorada</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding: 8px; font-size: 0.9rem;">Guardar Tarea</button>
+        </form>
       </div>
+    </details>
 
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 style="font-size: 1.1rem; color: var(--primary);">📋 Todas las Tareas</h3>
+      <span id="allTasksCountBadge" style="font-size: 0.8rem; background: var(--border); padding: 2px 8px; border-radius: 10px; font-weight:600;">0 tareas</span>
     </div>
-
-    <!-- Vista de detalle al pinchar un día específico -->
-    <div id="dayDetailView" style="display:none; margin-top:10px;">
-      <button class="btn btn-secondary" onclick="showDaysList()" style="margin-bottom: 12px;">← Volver a Días</button>
-      <h3 id="selectedDayTitle" style="font-size:1.1rem; color:var(--primary);"></h3>
-      <div style="margin: 12px 0;">
-        <label style="font-size:0.85rem; font-weight:600;">Filtrar Categoría: </label>
-        <select id="categoryFilter" onchange="renderDayTasks()" style="padding:6px; border-radius:6px; border:1px solid var(--border);">
-          <option value="ALL">Todas</option>
-          <option value="Rápida">Rápida</option>
-          <option value="Media">Media</option>
-          <option value="Demorada">Demorada</option>
-        </select>
-      </div>
-      <div id="tasksListContainer"></div>
-    </div>
+    
+    <!-- Lista general de todas las tareas -->
+    <div id="allTasksContainer"></div>
   </section>
 
   <!-- MINIJUEGO TAREAS RÁPIDAS -->
@@ -336,15 +337,15 @@
     </div>
   </div>
 
-  <!-- NAVEGACIÓN INFERIOR (3 pestañas optimizadas, con Añadir integrado en Diarias) -->
+  <!-- NAVEGACIÓN INFERIOR -->
   <nav>
     <button onclick="switchTab('dashboard', this)" class="active">
       <span class="icon">🏠</span>
       <span>Inicio</span>
     </button>
-    <button onclick="switchTab('daily', this)">
-      <span class="icon">📅</span>
-      <span>Diarias</span>
+    <button onclick="switchTab('tasks', this)">
+      <span class="icon">📋</span>
+      <span>Tareas</span>
     </button>
     <button onclick="switchTab('game', this)">
       <span class="icon">⚡</span>
@@ -355,7 +356,6 @@
   <script>
     const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-    // 20 Frases Motivacionales para rotar diariamente
     const MOTIVATIONAL_QUOTES = [
       "No cuentes los días, haz que los días cuenten.",
       "El secreto para salir adelante es empezar.",
@@ -382,7 +382,6 @@
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
     let records = JSON.parse(localStorage.getItem('records')) || [];
     
-    // Sistema cíclico semanal: comprobamos número de semana del año actual para reiniciar el progreso automáticamente al iniciar una nueva semana
     function checkWeeklyReset() {
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -406,7 +405,6 @@
 
     let selectedDay = null;
 
-    // Minijuego Config
     let selectedGameMode = 'today';
     let gameTasks = [];
     let currentGameIndex = 0;
@@ -435,10 +433,16 @@
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      if (btnEl) btnEl.classList.add('active');
+      
+      if (btnEl) {
+        btnEl.classList.add('active');
+      } else {
+        const matchingBtn = Array.from(document.querySelectorAll('nav button')).find(b => b.getAttribute('onclick').includes(tabId));
+        if (matchingBtn) matchingBtn.classList.add('active');
+      }
 
       if(tabId === 'dashboard') renderDashboard();
-      if(tabId === 'daily') showDaysList();
+      if(tabId === 'tasks') renderAllTasksList();
     }
 
     function getFormattedDateForDay(dayIndex) {
@@ -464,7 +468,6 @@
 
       const currentDayName = getCurrentDayRawName();
 
-      // Calendario por Días (resaltando el día actual en azul claro semitransparente)
       const cal = document.getElementById('dashboardCalendar');
       cal.innerHTML = '';
       DAYS.forEach((day, index) => {
@@ -475,7 +478,7 @@
         const isToday = (day === currentDayName);
 
         cal.innerHTML += `
-          <div class="calendar-day ${isToday ? 'today-highlight' : ''}">
+          <div class="calendar-day ${isToday ? 'today-highlight' : ''}" onclick="openDay('${day}', '${day}', ${index})">
             <header>${day} ${isToday ? '📍' : ''}</header>
             <small style="color:var(--text-muted);">${completed}/${total}</small>
             <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
@@ -483,40 +486,67 @@
         `;
       });
 
-      // Récords Sprint
       const recList = document.getElementById('recordsList');
       recList.innerHTML = records.length === 0 ? '<li style="color:var(--text-muted);">Sin récords de Modo Sprint aún</li>' : 
         records.slice(-5).reverse().map(r => `<li><b>${r.date}:</b> ${r.time}s (${r.count} tareas)</li>`).join('');
     }
 
-    // TAREAS DIARIAS Y LISTA GENERAL "TODAS"
-    function showDaysList() {
-      document.getElementById('dailyView').style.display = 'block';
-      document.getElementById('dayDetailView').style.display = 'none';
+    function openDay(rawDay, formattedDay, index) {
+      selectedDay = rawDay;
       
-      const container = document.getElementById('daysContainer');
-      container.innerHTML = '';
+      const dayTasks = tasks.filter(t => t.day === rawDay);
+      const completed = dayTasks.filter(t => t.completed).length;
+      const total = dayTasks.length;
+      
+      document.getElementById('selectedDayTitle').innerText = `${formattedDay} (${getFormattedDateForDay(index)})`;
+      document.getElementById('selectedDayCount').innerText = `${completed}/${total} tareas`;
+      
+      switchTab('day-view');
+      renderDayTasks();
+    }
 
-      const currentDayName = getCurrentDayRawName();
-
-      DAYS.forEach((day, index) => {
-        const dayTasks = tasks.filter(t => t.day === day);
-        const completed = dayTasks.filter(t => t.completed).length;
-        const total = dayTasks.length;
-        const isToday = (day === currentDayName);
-
-        container.innerHTML += `
-          <div class="day-card ${isToday ? 'today-highlight' : ''}" onclick="openDay('${day}', '${day}', ${index})">
-            <h3>${day} ${isToday ? '📍' : ''}</h3>
-            <div class="date-sub">${getFormattedDateForDay(index)}</div>
-            <p style="color:${completed === total && total > 0 ? 'var(--success)' : 'var(--text)'};">
-              ${completed} de ${total}
-            </p>
+    // RENDERIZADO DE TAREAS 
+    function generateTaskCardHtml(task) {
+      let subtasksHtml = '';
+      if (task.subtasks && task.subtasks.length > 0) {
+        const listHtml = task.subtasks.map((st, i) => `
+          <div>
+            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', ${i})"> 
+            <span style="${st.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${st.name}</span>
           </div>
+        `).join('');
+        
+        const allSubCompleted = task.subtasks.every(st => st.completed);
+        
+        subtasksHtml = `
+          <details class="subtasks-details" ${!allSubCompleted ? 'open' : ''}>
+            <summary>Sub-tareas (${task.subtasks.length})</summary>
+            <div class="subtasks-container">
+               ${listHtml}
+            </div>
+          </details>
         `;
-      });
+      }
 
-      renderAllTasksList();
+      const catClass = task.category.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      return `
+        <div class="task-card">
+          <div class="task-header">
+            <div class="task-title">
+              <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
+              <span style="${task.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${task.name}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:0.75rem; color:var(--primary); font-weight:600;">(${task.day})</span>
+              <span class="badge badge-${catClass}">${task.category}</span>
+              <button class="btn btn-edit" onclick="openEditModal('${task.id}')">✏️</button>
+              <button class="btn btn-danger" onclick="deleteTask('${task.id}')">🗑️</button>
+            </div>
+          </div>
+          ${subtasksHtml}
+        </div>
+      `;
     }
 
     function renderAllTasksList() {
@@ -526,46 +556,13 @@
       badge.innerText = `${tasks.length} tareas`;
 
       if(tasks.length === 0) {
-        allContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">No hay tareas registradas en la semana.</p>';
+        allContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">No hay tareas registradas.</p>';
         return;
       }
 
       tasks.forEach(task => {
-        const subtasksHtml = task.subtasks && task.subtasks.map((st, i) => `
-          <div>
-            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', ${i})"> 
-            <span style="${st.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${st.name}</span>
-          </div>
-        `).join('') || '';
-
-        const catClass = task.category.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        allContainer.innerHTML += `
-          <div class="task-card">
-            <div class="task-header">
-              <div class="task-title">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
-                <span style="${task.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${task.name}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:0.75rem; color:var(--primary); font-weight:600;">(${task.day})</span>
-                <span class="badge badge-${catClass}">${task.category}</span>
-                <button class="btn btn-edit" onclick="openEditModal('${task.id}')">✏️</button>
-                <button class="btn btn-danger" onclick="deleteTask('${task.id}')">🗑️</button>
-              </div>
-            </div>
-            ${subtasksHtml ? `<div class="subtasks-container">${subtasksHtml}</div>` : ''}
-          </div>
-        `;
+        allContainer.innerHTML += generateTaskCardHtml(task);
       });
-    }
-
-    function openDay(rawDay, formattedDay, index) {
-      selectedDay = rawDay;
-      document.getElementById('dailyView').style.display = 'none';
-      document.getElementById('dayDetailView').style.display = 'block';
-      document.getElementById('selectedDayTitle').innerText = `${formattedDay} (${getFormattedDateForDay(index)})`;
-      renderDayTasks();
     }
 
     function renderDayTasks() {
@@ -578,37 +575,16 @@
         filtered = filtered.filter(t => t.category === catFilter);
       }
 
+      const dayTasks = tasks.filter(t => t.day === selectedDay);
+      document.getElementById('selectedDayCount').innerText = `${dayTasks.filter(t => t.completed).length}/${dayTasks.length} tareas`;
+
       if(filtered.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No hay tareas para este día con este filtro.</p>';
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; padding: 10px 0;">No hay tareas para este día con este filtro.</p>';
         return;
       }
 
       filtered.forEach(task => {
-        const subtasksHtml = task.subtasks.map((st, i) => `
-          <div>
-            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', ${i})"> 
-            <span style="${st.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${st.name}</span>
-          </div>
-        `).join('');
-
-        const catClass = task.category.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        container.innerHTML += `
-          <div class="task-card">
-            <div class="task-header">
-              <div class="task-title">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
-                <span style="${task.completed ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${task.name}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span class="badge badge-${catClass}">${task.category}</span>
-                <button class="btn btn-edit" onclick="openEditModal('${task.id}')">✏️</button>
-                <button class="btn btn-danger" onclick="deleteTask('${task.id}')">🗑️</button>
-              </div>
-            </div>
-            ${subtasksHtml ? `<div class="subtasks-container">${subtasksHtml}</div>` : ''}
-          </div>
-        `;
+        container.innerHTML += generateTaskCardHtml(task);
       });
     }
 
@@ -618,8 +594,9 @@
         task.completed = !task.completed;
         if(task.subtasks) task.subtasks.forEach(s => s.completed = task.completed);
         saveToStorage();
-        if(selectedDay) renderDayTasks();
-        renderAllTasksList();
+        if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
+        if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+        renderDashboard(); 
       }
     }
 
@@ -629,8 +606,9 @@
         task.subtasks[subIdx].completed = !task.subtasks[subIdx].completed;
         task.completed = task.subtasks.every(s => s.completed);
         saveToStorage();
-        if(selectedDay) renderDayTasks();
-        renderAllTasksList();
+        if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
+        if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+        renderDashboard();
       }
     }
 
@@ -638,8 +616,9 @@
       if(confirm('¿Seguro que deseas eliminar esta tarea?')) {
         tasks = tasks.filter(t => t.id !== id);
         saveToStorage();
-        if(selectedDay) renderDayTasks();
-        renderAllTasksList();
+        if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
+        if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+        renderDashboard();
       }
     }
 
@@ -705,11 +684,12 @@
 
       saveToStorage();
       closeEditModal();
-      if(selectedDay) renderDayTasks();
-      renderAllTasksList();
+      if(document.getElementById('day-view').classList.contains('active')) renderDayTasks();
+      if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+      renderDashboard();
     }
 
-    // FORMULARIO AÑADIR (Integrado en Diarias)
+    // FORMULARIO AÑADIR
     function addSubtaskField(containerId) {
       const wrapper = document.getElementById(containerId);
       const div = document.createElement('div');
@@ -750,7 +730,11 @@
       document.getElementById('taskForm').reset();
       document.getElementById('subtasksWrapper').innerHTML = `<div class="subtask-input-group"><input type="text" class="subtask-input" placeholder="Ej. Leer capítulo 1"></div>`;
       
+      // Cerrar el acordeón de añadir tras guardar con éxito
+      document.querySelector('.add-task-container').removeAttribute('open');
+      
       renderAllTasksList();
+      renderDashboard(); // Actualizar barras de progreso al añadir tarea
       alert('¡Tarea agregada exitosamente!');
     }
 
@@ -808,6 +792,7 @@
             count: gameTasks.length
           });
           saveToStorage();
+          renderDashboard();
         }
 
         gameContent.innerHTML = `
@@ -836,6 +821,7 @@
         if(mainTask.subtasks) mainTask.subtasks.forEach(s => s.completed = true);
         saveToStorage();
         renderAllTasksList();
+        renderDashboard();
       }
 
       currentGameIndex++;
@@ -875,4 +861,3 @@
   </script>
 </body>
 </html>
-
