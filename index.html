@@ -41,9 +41,9 @@
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 5px 0; gap: 8px; flex-wrap: wrap; }
 
     /* Entorno Selector & Tema */
-    .top-controls { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: space-between; margin-bottom: 8px; }
+    .top-controls { display: flex; align-items: center; gap: 6px; width: 100%; justify-content: space-between; margin-bottom: 8px; }
     .env-select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-weight: 600; font-size: 0.9rem; flex: 1; }
-    .theme-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+    .theme-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
 
     /* Navegación inferior / adaptada a celular (3 pestañas) */
     nav {
@@ -191,8 +191,9 @@
       <select id="environmentSelect" class="env-select" onchange="changeEnvironment(this.value)">
         <!-- Dinámico -->
       </select>
-      <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Oscuro</button>
-      <button class="theme-btn" onclick="addNewEnvironment()" title="Crear entorno">➕ Entorno</button>
+      <button class="theme-btn" onclick="addNewEnvironment()" title="Crear entorno">➕</button>
+      <button class="theme-btn" onclick="deleteCurrentEnvironment()" title="Eliminar entorno actual" style="color:var(--danger)">🗑️</button>
+      <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
     </div>
   </header>
 
@@ -427,11 +428,21 @@
       "Hazlo con pasión o no lo hagas."
     ];
 
-    // Entornos de trabajo (por defecto: Trabajo, Personal)
+    // Carga robusta de entornos y datos con migración automática si venía de un array plano
     let environments = JSON.parse(localStorage.getItem('environments')) || ['Trabajo', 'Personal'];
     let currentEnv = localStorage.getItem('currentEnv') || environments[0];
+    if(!environments.includes(currentEnv)) {
+      currentEnv = environments[0];
+    }
     
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+    let rawTasks = JSON.parse(localStorage.getItem('tasks')) || {};
+    let tasks = {};
+    if (Array.isArray(rawTasks)) {
+      tasks['Trabajo'] = rawTasks;
+    } else {
+      tasks = rawTasks;
+    }
+
     let records = JSON.parse(localStorage.getItem('records')) || {};
 
     // Tema
@@ -449,9 +460,9 @@
     function updateThemeButtonText() {
       const btn = document.getElementById('themeToggleBtn');
       if(currentTheme === 'dark') {
-        btn.innerHTML = '☀️ Claro';
+        btn.innerHTML = '☀️';
       } else {
-        btn.innerHTML = '🌙 Oscuro';
+        btn.innerHTML = '🌙';
       }
     }
 
@@ -490,6 +501,29 @@
       }
     }
 
+    function deleteCurrentEnvironment() {
+      if(environments.length <= 1) {
+        alert('Debes mantener al menos un entorno.');
+        return;
+      }
+      if(confirm(`¿Estás seguro de eliminar el entorno "${currentEnv}" y todas sus tareas?`)) {
+        environments = environments.filter(e => e !== currentEnv);
+        delete tasks[currentEnv];
+        delete records[currentEnv];
+        
+        localStorage.setItem('environments', JSON.stringify(environments));
+        saveToStorage();
+        
+        currentEnv = environments[0];
+        localStorage.setItem('currentEnv', currentEnv);
+        
+        initEnvironmentsSelect();
+        renderDashboard();
+        if(document.getElementById('tasks').classList.contains('active')) renderAllTasksList();
+        if(document.getElementById('day-view').classList.contains('active')) switchTab('dashboard');
+      }
+    }
+
     initEnvironmentsSelect();
 
     function getEnvTasks() {
@@ -511,14 +545,16 @@
       const lastReset = localStorage.getItem('lastResetWeek');
       if (lastReset !== yearWeekKey) {
         Object.keys(tasks).forEach(env => {
-          tasks[env].forEach(t => {
-            if(t.day !== 'Extra') {
-              t.completed = false;
-              if (t.subtasks) {
-                t.subtasks.forEach(st => st.completed = false);
+          if(Array.isArray(tasks[env])) {
+            tasks[env].forEach(t => {
+              if(t.day !== 'Extra') {
+                t.completed = false;
+                if (t.subtasks) {
+                  t.subtasks.forEach(st => st.completed = false);
+                }
               }
-            }
-          });
+            });
+          }
         });
         localStorage.setItem('tasks', JSON.stringify(tasks));
         localStorage.setItem('lastResetWeek', yearWeekKey);
@@ -537,6 +573,7 @@
     function saveToStorage() {
       localStorage.setItem('tasks', JSON.stringify(tasks));
       localStorage.setItem('records', JSON.stringify(records));
+      localStorage.setItem('environments', JSON.stringify(environments));
     }
 
     function loadDailyQuote() {
@@ -603,7 +640,6 @@
         const percent = total > 0 ? (completed / total) * 100 : 0;
         const isToday = (day === currentDayName);
         
-        // En inicio los nombres de los días van enteros
         let label = day === 'Extra' ? 'Extra ⭐' : day;
 
         cal.innerHTML += `
@@ -646,7 +682,6 @@
           </div>
         `).join('');
         
-        // Sub-tareas siempre cerradas por defecto
         subtasksHtml = `
           <details class="subtasks-details">
             <summary>Sub-tareas (${task.subtasks.length})</summary>
@@ -690,7 +725,6 @@
         return;
       }
 
-      // Ordenar tareas: Lunes -> Extra
       const sortedTasks = [...envTasks].sort((a, b) => (DAY_ORDER[a.day] || 99) - (DAY_ORDER[b.day] || 99));
 
       sortedTasks.forEach(task => {
